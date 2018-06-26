@@ -1,0 +1,381 @@
+<style>.d-b {display:block}</style>
+Emphasis on opinionated. Don't say I didn't warn you!
+
+- [Primary Keys](#primary-keys)
+- [Data Transformation](#data-transformation)
+- Views and Fields
+- [Change Management](#change-management)
+- [Extras](#extras)
+
+<h1 id="primary-keys">Primary Keys Dimensions</h1>
+<p>If there is one concept in database work whose importance could not be overstated, it's primary keys. Know them, communicate them, and trust them.</p>
+
+
+<details id="k1"> <!-- Primary keys required -->
+	<summary><b>K1.</b> Every LookML view that is based on a table must define 1 or more Primary Key Dimensions.</summary>
+	<p>
+	<p><b>Note:</b> "based on a table" could be either through a `sql_table_name`, `derived_table`, or implicit table name. Essentially, it's any view that's not a "field-only view" which will be joined using `join: {sql ;;}`</p>
+
+	<code>
+	view: carriers {
+	  sql_table_name: faa.carriers ;;
+	  dimension: 1pk_carrier_id {
+	    hidden: yes
+	    primary_key: yes
+	    sql:${TABLE}.id;;
+	  }
+	</code>
+
+	</details>
+
+<details id="k2"> <!-- Primary key naming -->	
+	<summary><b>K2.</b> Primary Key Dimensions must be named like `<n>pk_<key_name>`...</summary>
+	<p>..., where n is the total number of columns that form the primary key, and which may be omitted if it is 1, and key_name is any descriptive name.</p>
+	<p>**Rationale:** With this naming convention, anyone creating a join can conclusively find the correct logic without having to investigate:</p>
+
+	<img src="https://discourse.looker.com/uploads/default/original/2X/f/f3be7728c8ecdeaa3b94dabe4a8824b678282842.png" width="381" height="117" />
+
+	<p>Additionally, anyone reading the join could conclusively verify it. </p>
+
+	<h5>Example</h5>
+
+	```
+	view: membership {
+	   sql_table_name: membership ;;
+	   dimension: 2pk_user_id {hidden:yes sql:${TABLE}.user_id;;}
+	   dimension: 2pk_group_id {hidden:yes sql:${TABLE}.group_id;;}
+	   dimension: user_x_group {
+	      hidden:yes 
+	      primary_key: yes 
+	      sql: ${2pk_user_id} || 'x' || ${2pk_group_id} ;;
+	   }
+	}
+
+	explore: invitations {
+	  join: membership {
+	    relationship: many_to_one
+	    sql_on: ${membership.2pk_user_id} = ${invitations.to_user_id}
+	      AND   ${membership.2pk_group_id} = ${invitations.group_id} ;;
+	    # ^ I can tell there MUST be only one membership. Looks good.
+	  }
+	}
+	explore: users {
+	  join: membership {
+	    relationship: many_to_one
+	    sql_on: ${membership.2pk_user_id} = ${users.id} ;;
+	    # Uh-oh, something is wrong here!
+	  }
+	}
+	```
+
+	<h5>Notes</h5>
+
+	<ul>
+	<li> The number can (and must) be 0 in the rare case that you are working with a table with no primary key.
+	<li> For keys with more than one column, all the numbers should be equal to the total number of columns. So, `3pk_a`, `3pk_b`, and `3pk_c`, NOT `1pk_a`, `2pk_b`, and `3pk_c`
+	<li> For keys with more than one columns, this does mean you would need to define it in two ways. Once this way, and once as a single concatenated dimension with `primary_key: yes` (if necessary) so Looker can use it for generating symmetric aggregates. This is a small price to pay for the many instances of time saved looking up primary key information when writing/reading explores.
+	</ul>
+
+	</details>
+
+<details id="k3" > <!-- Primary key location -->
+	<summary><b>K3.</b> Primary Key Dimensions must be defined immediately following the table definition...</summary>
+	<p>... and the table definition _should_ be defined before any other dimensions.</p>
+	<p><b>Rationale:</b> By placing primary keys immediately below a derived table definition, users viewing the view file can effortlessly verify that the primary key dimensions match the derived table's grouping (per rule T...).</p>
+	</details>
+
+<details id="k4"> <!-- Primary key hidden -->
+	<summary><b>K?.</b> Primary Keys Dimensions must be hidden?	</summary>
+	<p><b>Rationale:</b> The audience for PK information is developers. They use it to inform how to join and consume tables, and they can do so equally well with a hidden field.</p>
+	<p><b>Note:</b> If a column that is a primary key should be user facing, it should be exposed via a separate dimension.</p>
+	</details> 
+
+<details id="k5"> <!-- Primary keys used -->
+	<summary><b>K5.</b> The "one" table in any join must be joined on equality constraints on all of the Primary Key Dimensions</summary>
+	<p> This is relevant for any 1:1, 1:m, m:1, 1:0or1 joins. In otherwords, any non-many-to-many join (which you should only be using with great caution)</p>
+	</h5>Examples</h5>
+
+	<p>GOOD:</p>
+
+	<code class="d-b">
+	join: users {
+	  relationship: many_to_one
+	  sql_on: ${1pk_user_id} = ${orders.user_id} ;;
+	}
+	</code>
+
+	<p>BAD:</p>
+
+	```
+	join: users {
+	  relationship: many_to_one
+	  sql_on: ${users.id} = ${orders.user_id} ;;
+	  # ^ I can only _hope_ that this is right, or spend time verifying it
+	}
+	```
+
+	<p>QUESTIONABLE:</p>
+
+	```
+	join: dates {
+	  relationship: many_to_many
+	  sql_on: ${dates.1pk_date} >= $[users.created_date} AND ${dates.1pk_date} <= $[users.deleted_date} ;; 
+	}
+	```
+
+	</details>
+
+
+
+<h1 id="data-transformation">Data Transformation</h1>
+<p>Whether you're using Looker's derived tables or an external transformation tool like DBT, these practices apply. Of course, using PDT's allows you to enforce these rules all in one place.</p>
+
+<details id="t1"> <!-- Primary keys required --> 
+	<summary><b>T1.</b> Except for exceptions in T8 & T9, every query, derived table, CTE, or subquery must select a set of primary key columns following rules T2-T7</summary>
+	</details>
+
+<details id="t2"> <!-- Primary key naming --> 
+	<summary><b>T2.</b> Primary key columns must be named like {n}pk_{column_name}...</summary>
+	<p>...where {n} is the total number of columns in the primary key
+	</details>
+
+<details id="t3"> <!-- Primary key positioning --> 
+	<summary><b>T3.</b> Primary key columns must be the first columns in the SELECT clause</summary>
+	</details>
+
+
+<details id="t4"> <!-- Grouped PK starts... --> 
+	<summary><b>T4.</b> For grouped queries, the PK must start with one, more, or all of the grouped columns</summary>
+	</details>
+
+<details id="t5"> <!-- Ungrouped PK starts... -->
+	<summary><b>T5.</b> For ungrouped queries, the PK must start with one, more, or all of the PK's from the many-joined tables</summary>
+	
+	<h5>Notes</h5>
+	<ul>
+	<li>In most cases, unless you _intend_ to use a window function to create sequence numbers within a partition, the primary key should simply be ALL of the grouped by fields.</li>
+	<li>If you want to join this derived table on only a subset of it's PK, what you probably want is a a separate derived table that groups by ONLY those columns and aggregates the rest (see example below)</li>
+	</ul>
+	
+	<h5>Examples</h5>
+	
+	BAD
+	```
+	view: instance_daily {derived_table: {sql:
+	SELECT
+		events.instance_id as 2pk_instance_id,
+		events.event_date as 2pk_event_date,
+		---
+		events.app_version,
+		COUNT(*) as events
+	FROM events
+	GROUP BY 1,2,3
+	;;}}
+	```
+	
+	QUESTIONABLE
+	```
+	view: instance_daily {derived_table: {sql:
+	SELECT
+		events.instance_id as 3pk_instance_id,
+		events.event_date as 3pk_event_date,
+		events.app_version as 3pk_app_version,
+		---
+		COUNT(*) as events
+	FROM events
+	GROUP BY 1,2,3
+	;;}}
+	```
+	
+	QUESTIONABLE
+	```
+	view: instance_daily {derived_table: {sql:
+	SELECT 
+		events.instance_id as 3pk_instance_id,
+		events.event_date as 3pk_event_date,
+		ROW_NUMBER() OVER (
+			PARTITION BY events.instance_id, events.event_date
+		) as 3pk_app_version_sequence
+		---
+		events.app_version,
+		COUNT(*) as events
+	FROM events
+	GROUP BY 1,2
+	;;}}
+	```
+	Although the above two "questionable" examples satisfy rules T5 & T6, you will likely find that it is not natural to join them on their entire primary key when you try to use them elsewhere. 
+	
+	GOOD
+	```
+	view: instance_daily {derived_table: {sql:
+	SELECT 
+		events.instance_id as 2pk_instance_id,
+		events.event_date as 2pk_event_date,
+		---
+		MAX(events.app_version) as app_version,
+		-- Maybe min too depending on business logic
+		COUNT(*) as events
+	FROM events
+	GROUP BY 1,2
+	```
+	</details>
+
+<details id="t6"> <!-- PK continues with window -->
+	<summary><b>T6.</b> If the SELECT did not use ALL of the available columns from T4 or T5, the PK must continue with a window function... </summary>
+		
+	</details>
+
+<details id="t7"> <!-- PK may continues with asserted aggregates -->
+	<summary>Views/derived tables, CTEs, and subqueries may SELECT  and non-pk projections FROM a single table</summary>
+		
+	</details>
+
+<details id="t8"> <!-- PK ends with - - - -->
+	<summary>Primary keys columns end with "---" on its own line</summary>
+		
+	</details>
+
+<details id="t9"> <!-- SELECT 1 col allowed -->
+	<summary>Subqueries and CTEs may SELECT a single column without declaring primary keys</summary>
+	<p><b>Rationale:</b> Often, short subqueries are desired for existence or scalar logic that are (a) not reused outside of the current query, and (b) simple enough to read and understand that they can be analyzed in the context of the containing query with little added complexity</p>
+	<p><b>Examples:</b></p>
+		
+	```
+	view: new_orders {derived_table:{sql:
+	SELECT
+		1pk_order_id
+	FROM orders
+	WHERE order_date > (SELECT MAX(order_date) FROM order_rollup)
+					 -- ^ This single-column subquery is exempt
+	;;}}
+	```
+	
+	```
+	view: pending_users {derived_table:{sql:
+	SELECT 
+		1pk_user_id
+	FROM users
+	WHERE id IN (SELECT user_id FROM orders WHERE status='Pending')
+	           -- ^ This single-column subquery is exempt
+	;;}}
+	```
+
+	</details>
+	
+<details id="t10"> <!-- SELECT * from one table -->
+	<summary><b>T9.</b> Queries may SELECT &#42; (plus any non-pk columns) FROM a single table/subquery</summary>
+		
+	</details>
+
+	<p>1. Internally, by placing them at the top of the selected columns, and separated from the remaining columns by "---" on its own line</p>
+	<p>2. Externally, by naming them like <n>pk_<column_name>, where n is the number of columns in the primary key, and column_name is any identifying name</p>
+	<p>GOOD<p>
+	
+	```
+	derived_table: {sql: 
+		SELECT
+			user_id as 1pk_user_id
+			---
+			COUNT(*) as lifetime_orders,
+			SUM(amount) as lifetime_spend
+		FROM orders
+		GROUP BY user_id ;;}
+	```
+	
+	<p>BAD<p>
+	
+	```
+	derived_table: {sql: 
+		SELECT
+			user_id,
+			COUNT(*) as lifetime_orders,
+			SUM(amount) as lifetime_spend
+		FROM orders
+		GROUP BY 1 ;;}
+	```
+	<p>BAD<p>
+	
+	```
+	derived_table: {sql: 
+		WITH orders AS (
+			SELECT order_id, SUM(amount) FROM order_items
+			GROUP BY 
+		)
+		SELECT
+			user_id as 1pk_user_id
+			---
+			COUNT(*) as lifetime_orders,
+			SUM(amount) as lifetime_spend
+		FROM orders
+		GROUP BY user_id ;;}
+	```
+
+<details> <!-- Primary keys production restricted -->
+	<summary>T2. All columns in the primary key must be produced by one of T3 - T... </summary> 
+	</details>
+	
+<details> <!-- PK === All grouped by -->
+	<summary>T3. All columns in the primary key must be produced by one of T3 - T... </summary> 
+	</details>
+	
+<details> <!-- PK === Ungrouped joined PK's -->
+	<summary>T3. All columns in the primary key must be produced by one of T3 - T... </summary> 
+	</details>
+	
+<details> <!-- PK === Grouped  -->
+	<summary>T3. All columns in the primary key must be produced by one of T3 - T... </summary> 
+	</details>
+
+
+
+	
+### T2. Assert
+
+### T3. No Order By
+
+<h1 id="views-and-fields">Views and Fields</h1>
+
+<details>
+	<summary>F...Avoid Inter-View Dependencies</summary>
+
+###F... No View Labeled Fields
+Fields should not contain a view_label.
+
+
+<details> <!-- Explore-specific fields/views -->
+	<summary>
+###F... Explore-Specific Views
+
+
+**Rationale:** Field-level view labels can't be overridden by a join. Prefer view-level view labels.
+
+###F... Codimension Views & Joins
+Codimension views may be replicated for a specific explore or set of view dependencies.
+
+Codimension views should contain only one dimension or dimension group.
+
+Codimension joins should realias codimensions views to a global name.
+
+
+
+###F... Count Fields
+All "plain" count fields must specify a filter of "primary key dimensions are not null"
+
+**Rationale:** By default Looker will implement a plain count field as a `COUNT(*)`. Forcing a filter on the primary key ensure correct counts in all of the following uses of the field: Counting just that table, counting that table when joined on as a one-to-one-or-zero table,
+
+<h1 id="change-management">Change Management</h1>
+
+### C... Definition of Major Changes
+
+### C... Definition of Minor Changes
+
+### C... Major changes that can be deferred
+
+### C... Major changes should promote all deferred changes
+
+### C... Major changes must use new view names
+
+### C... Major changes should document breaking changes
+
+<h1 id="extras">Extras</h1>
+I don't care for rules constraining indentation, capitalization, and the like, but if you want that, here's a possible style guide: https://gist.github.com/fredbenenson/7bb92718e19138c20591
