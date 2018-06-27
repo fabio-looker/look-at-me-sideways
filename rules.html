@@ -1,11 +1,22 @@
-<style>.d-b {display:block}</style>
+<!doctype html>
+<html><head><title>Fabio's Opinionated SQL & LookML Rules</title></head>
+<body backgroundColor="#EEE">
+<style>
+	code.block {display:block}
+	code.good {background-color: #FDD; box-shadow: 5px 5px 15px 0px #600;} 
+	code.questionable {background-color: #FFD; box-shadow: 5px 5px 15px 0px #440;} 
+	code.bad{background-color: #DFD; box-shadow: 5px 5px 15px 0px #060;} 
+
+</style>
 Emphasis on opinionated. Don't say I didn't warn you!
 
-- [Primary Keys](#primary-keys)
-- [Data Transformation](#data-transformation)
-- Views and Fields
-- [Change Management](#change-management)
-- [Extras](#extras)
+<nav><ul>
+<li> <a href="#primary-keys">Primary Keys</a></li>
+<li> <a href="#data-transformation">Data Transformation</a></li>
+<li> Views and Fields</li>
+<li> <a href="#change-management">Change Management</a></li>
+<li> <a href="#out-of-scope">Out of Scope</a></li>
+</ul></nav>
 
 <h1 id="primary-keys">Primary Keys Dimensions</h1>
 <p>If there is one concept in database work whose importance could not be overstated, it's primary keys. Know them, communicate them, and trust them.</p>
@@ -13,7 +24,6 @@ Emphasis on opinionated. Don't say I didn't warn you!
 
 <details id="k1"> <!-- Primary keys required -->
 	<summary><b>K1.</b> Every LookML view that is based on a table must define 1 or more Primary Key Dimensions.</summary>
-	<p>
 	<p><b>Note:</b> "based on a table" could be either through a `sql_table_name`, `derived_table`, or implicit table name. Essentially, it's any view that's not a "field-only view" which will be joined using `join: {sql ;;}`</p>
 
 	<code>
@@ -377,5 +387,7 @@ All "plain" count fields must specify a filter of "primary key dimensions are no
 
 ### C... Major changes should document breaking changes
 
-<h1 id="extras">Extras</h1>
-I don't care for rules constraining indentation, capitalization, and the like, but if you want that, here's a possible style guide: https://gist.github.com/fredbenenson/7bb92718e19138c20591
+<h1 id="out-of-scope">Out of Scope</h1>
+<p>I don't care for rules constraining indentation, capitalization, and the like, but if you want that, here's a possible style guide: https://gist.github.com/fredbenenson/7bb92718e19138c20591</p>
+
+</body></html>
