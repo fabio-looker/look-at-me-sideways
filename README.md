@@ -1,3 +1,3 @@
->_>
+`>_>`
 
 [Rules](docs/rules.html)
