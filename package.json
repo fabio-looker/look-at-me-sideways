@@ -1,0 +1,28 @@
+{
+  "name": "look-at-me-sideways",
+  "version": "0.0.0",
+  "description": "A judgmental little LookML linter >_>",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fabio-looker/look-at-me-sideways.git"
+  },
+  "keywords": [
+    "looker",
+    "lookml",
+    "lint",
+    "linter"
+  ],
+  "author": "Fabio Beltramini",
+  "license": "UNLICENSED",
+  "bugs": {
+    "url": "https://github.com/fabio-looker/look-at-me-sideways/issues"
+  },
+  "homepage": "https://github.com/fabio-looker/look-at-me-sideways#readme"
+}
