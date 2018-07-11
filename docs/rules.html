@@ -1,11 +1,17 @@
 <!doctype html>
-<html><head><title>Fabio's Opinionated SQL & LookML Rules</title></head>
+<html>
+<head>
+	<title>Fabio's Opinionated SQL & LookML Rules</title>
+	<meta charset="utf8" />
+</head>
 <body>
 <style>
 	html {width:100%}
 	body {background-color: #FAFAFA; margin: 2em auto; width:60em;}
 	p,ul {width:80%;max-width:40em}
 	li{margin-bottom: 0.5em;}
+	details {padding-left:3em;}
+	summary {margin-left:-3em;}
 	code.block {display:block; white-space: pre-wrap; max-width:90%;margin:1em 0 1.5em 0; tab-size:2em;}
 	code.good.block {background-color: #EFE; box-shadow: 2px 2px 10px 0px #9C9;}
 	code.good.block::before {content:"# GOOD:"}
@@ -20,20 +26,24 @@
 Emphasis on opinionated. Don't say I didn't warn you!
 
 <nav><ul>
+<li> <a href="#terms">Terms</a></li>
 <li> <a href="#key-dimensions">Key Dimensions</a></li>
-<li> <a href="#data-transformation">Data Transformation</a></li>
 <li> <a href="#other-fields">Other Fields</a></li>
-<li> <a href="#codimensions">Codimensions</a></li>
+<li> <a href="#derived-tables">Derived Tables</a></li>
 <li> <a href="#explores">Explores</a></li>
-<li> <a href="#change-management">Change Management</a></li>
 <li> <a href="#out-of-scope">Out of Scope</a></li>
 </ul></nav>
 
+<h1 id="terms">Terms</h1>
+	<details><summary>Distribution key</summary> In Redshift, Vertica, MemSQL, MS PDW and possibly some others, data can be distributed according to a particular value. For simplicity, I use the name distribution key, though different dialects may have different names for this.</details>
+	<details><summary>Sort key</summary> Sort keys in Redshift, or partition columns in Big Query, clustered indexes in MS SQL Server or PDW, etc.</details>
+	<details><summary>must</summary> Whenever a rule says something "must" be done, there shouldn't be any exceptions within your project. These are rules that need to be followed consistently since others will rely upon them being followed in their work elsewhere. </details>
+	<details><summary>should</summary> Whenever a rule says that something "should" be done, there may be reasons to deviate from these rules, and doing so will not break any assumptions elsewhere. Whenever the rule is not followed, a comment should be used to indicate the rationale to future readers of the code. </details>
 
-<h1 id="primary-keys">Key Dimensions</h1>
+<h1 id="key-dimensions">Key Dimensions</h1>
 <p><b>Summary:</b> Implement consistent dimensions to communicate information about views' keys to developers who use the view</p>
 <details id="k1"> <!-- Primary keys required -->
-	<summary><b>K1.</b> Every LookML view that is based on a table must define 1 or more Primary Key Dimensions.</summary>
+	<summary><b>K1.</b> LookML views based on tables must define 1 or more Primary Key Dimensions.</summary>
 	<p><b>Note:</b> "based on a table" could be either through a `sql_table_name`, `derived_table`, or implicit table name. Essentially, it's any view that's not a "field-only view" which will be joined using `join: {sql ;;}`</p>
 
 	<code class="block good">
@@ -100,62 +110,119 @@ Emphasis on opinionated. Don't say I didn't warn you!
 <details id="k3"> <!-- Primary key location -->
 	<summary><b>K3.</b> Primary Key Dimensions must be defined immediately following the table definition...</summary>
 	<p>... and the table definition _should_ be defined before any other dimensions.</p>
-	<p><b>Rationale:</b> By placing primary keys immediately below a derived table definition, users viewing the view file can effortlessly verify that the primary key dimensions match the derived table's grouping (per rule T...).</p>
+	<p><b>Rationale:</b> By placing primary keys immediately below a derived table definition, users viewing the view file can easily verify that the primary key dimensions match the derived table's grouping (per rule T...).</p>
 	</details>
 <details id="k4"> <!-- Primary key hidden -->
 	<summary><b>K4.</b> Primary Keys Dimensions should be hidden?	</summary>
 	<p><b>Rationale:</b> The audience for PK information is developers. They use it to inform how to join and consume tables, and they can do so equally well with a hidden field.</p>
 	<p><b>Note:</b> If a column that is a primary key should be user facing, you may want to expose it via a separate dimension.</p>
 	</details>
-<details id="k5"> <!-- Primary keys used -->
-	<summary><b>K5.</b> The "one" table in any join must be joined on equality constraints on all of the Primary Key Dimensions</summary>
-	<p> This is relevant for any 1:1, 1:m, m:1, 1:0or1 joins. In otherwords, any non-many-to-many join (which you should only be using with great caution)</p>
-	<h5>Examples</h5>
+<details id="k5"> <!-- Distribution dimensions -->
+	<summary><b>K5.</b> LookML views based on tables with a distribution key should define a Distribution Key Dimension...</summary>
+	<p>...named like <code>dpk_{key_name}</code></p>
+	<p><b>Rationale:</b> By naming it similarly to Primary Keys, it will be suggested to anyone joining on a view as a possible join key. At the same time, the use of a `d` instead of a number allows it to be differentiated from a primary key</p>
+	<p><b>Note:</b> If your database supports multiple projections of data, you may want to come up with a more sophisticated naming scheme instead.</p>
+	</details>
+<details id="k6"> <!-- Sort dimensions -->
+	<summary><b>K6.</b> LookML views based on tables with a sort key should define one or more Sort Key dimensions</summary>
+	<p><b>Note:</b> The name for this concept varies greatly from database to database, and you may want your naming scheme to reflect the native name for this concept in your particular database. "sk" is also not ideal in that it could be read as "surrogate key".</p>
+	<p><b>Note:</b> If you have compound sort keys, it would be a good idea to include the rank of each column in the dimension name. Unlike the PK naming convention, each column should get a different numner, e.g. <code>idx1_site, idx2_date, idx3_country</code>.</p>
+	</details>
 
-	<p>GOOD:</p>
-
-	<code class="d-b">
-	join: users {
-	  relationship: many_to_one
-	  sql_on: ${1pk_user_id} = ${orders.user_id} ;;
+<h1 id="other-fields">Other Fields</h1>
+<p><b>Summary:</b> Implement fields in ways which (a) maximize the ability of developers to reuse them in the future, and (b) maximize the usability of explores for end users</p>
+<details id="f1"> <!-- No inter-view dependencies -->
+	<summary><b>F1.</b> Fields in a view should not reference other views...</summary>
+	<p>... unless this is (A) a field-only view, or (B) a tightly coupled view (provide a base explore too!)</p>
+	<p><b>Rationale:</b> Inter-view dependencies interfere with the re-use of the view<p>
+	<code class="block bad">
+	view: users {...}
+	view: orders {
+	  ...
+	  measure: orders_per_user {
+	    sql: ${count} / NULLIF(${users.count},0)
+	  }
 	}
+	explore: orders {} # Errors :(
 	</code>
 
-	<p>BAD:</p>
-
-	```
-	join: users {
-	  relationship: many_to_one
-	  sql_on: ${users.id} = ${orders.user_id} ;;
-	  # ^ I can only _hope_ that this is right, or spend time verifying it
+	<code class="block good">
+	view: users {...}
+	view: orders {...}
+	view: users_orders {
+	  # No need for a sql_table_name or derived_table
+	  measure: orders_per_user {
+	    sql: ${orders.count} / NULLIF(${users.count},0)
+	  }
 	}
-	```
-
-	<p>QUESTIONABLE:</p>
-
-	```
-	join: dates {
-	  relationship: many_to_many
-	  sql_on: ${dates.1pk_date} >= $[users.created_date} AND ${dates.1pk_date} <= $[users.deleted_date} ;;
+	explore: orders {} #Doesn't break like before!
+	explore: users {
+	  join: orders {...}
+	  join: users_orders {
+	    sql: ;;
+	    # Use `sql` instead of `sql_on` and put some whitespace in it
+	    relationship: one_to_one
+	    view_label: "Orders" #For cleaner explore UI
+	  }
 	}
-	```
+	</code>
+	</details>
+<details id="f2"><!-- No view-labeled fields -->
+	<summary><b>F2.</b> Fields should not contain a view_label.</summary>
+	<p><b>Rationale:</b> Field-level view labels can't be overridden by a join. Prefer view-level view labels.</p>
+	</details>
+<details id="f3"><!-- Count fields filtered -->
+	<summary><b>F3.</b> All type:count measures must specify a filter</summary>
+	<p>"Plain" count fields can/should specify a filter of "primary key dimensions are not null"</p>
+	<p><b>Rationale:</b> By default Looker will implement any non-filtered & non-distinct count field as a `COUNT(*)`. Filtering such "plain" count on PK IS NOT NULL ensures correct counts in all of the following uses of the field: Counting just that table, counting that table when joined on as a one-to-one-or-zero table, counting that table with symmetric aggregates when joined on as a many_to_one table, and counting that table in explores with join paths.</b>
+	<code class="block good">
+	measure: count {
+		type: count
+		filters:{
+			field: 1pk_user_id
+			filter: "-null"
+		}
+	}
+	</code>
+	</details>
+<details> <!-- Description or hidden -->
+	<summary> Non-hidden fields should have descriptions</summary>
+	<p><b>Rationale:</b> For a better user experience.</p>
+	<p><b>Note:</b> Think about the audience when you write a description. Information for end users can go in the description, whereas information for other developers can go in a LookML comment</p>
+	</details>
+<details> <!-- ID fields hidden -->
+	<summary> ID fields that do not have a business usage should be hidden</summary>
+	<code class="good block">
+	view: order_tems { ... 1pk_order_item_id {hidden:yes}}
+	</code>
+	</details>
+<details> <!-- FK ID fields hidden -->
+	<summary> ID fields that DO have a business usage should still be hidden when they are a foreign key</summary>
+	<p><b>Rationale:</b> The ID field will make most sense for end users when they are exposed under the view for which they are a primary key.</p>
+	<code class="bad block">
+	view: order_items { ... dimension: order_id { ... description: "..." } }
+	view: orders { ... dimension: id { ... hidden:yes }}
+	</code>
+	<code class="good block">
+	view: order_tems { ... dimension: order_id { hidden:yes }}
+	view: orders { ... dimension: id {... description: "..." }}
+	</code>
+	</details>
+<details> <!-- Description or hidden -->
+	<summary> Non-hidden fields should have a filter</summary>
 
 	</details>
-<details id="k6"> <!-- Distribution dimensions -->
-	</details>
-<details id="k7"> <!-- Sort dimensions -->
-	</details>
 
 
-<h1 id="data-transformation">Derived Tables</h1>
-<p><b>Summary:</b></p>
+<h1 id="derived-tables">Derived Tables</h1>
+<p><b>Summary:</b> Restrict the ways in which you write the SQL for derived tables in order to make them more modular and their results more realiable and understandable.</p>
 <p><b>Note:</b> Even if you are using an external transformation tool like DBT, these practices are still applicable. Of course, using PDT's allows you to enforce these rules all in one place.</p>
 
 <details id="t1"> <!-- Primary keys required -->
 	<summary><b>T1.</b> Except for exceptions in T... & T..., every query, derived table, CTE, or subquery must SELECT a set of primary key columns following rules T2-T7</summary>
 	<p><b>Rationale:</b> Primary keys define a contract that allows anyone reviewing the logic of a query to evaluate it modularly.
 		Without them, any attempt to troubleshoot a query requires an arbitrarily deep investigation of related subqueries.
-		With them, each query and subquery can be evaluated independently to confirm their correctness based on their explicit requirements. </p>
+		With them, each query and subquery can be evaluated independently against their declared PK and the declared PK's of the participating tables.</p>
 
 		<code class="good block">
 		view: user_lifetime {derived_table: {sql:
@@ -193,14 +260,55 @@ Emphasis on opinionated. Don't say I didn't warn you!
 			FROM orders
 			GROUP BY user_id ;;}
 		</code>
-
 	</details>
 <details id="t2"> <!-- Primary key naming -->
 	<summary><b>T2.</b> Primary key columns must be aliased AS {n}pk_{column_name}...</summary>
-	<p>...where {n} is the total number of columns in the primary key
+	<p>...where {n} is the total number of columns in the primary key</p>
+	<code class="good block">
+	view: events_rollup {derived_table: {sql:
+		SELECT
+			site as 2pk_site,
+			date as 2pk_date,
+			---
+			COUNT(*) as events
+		FROM events
+		GROUP BY site,date ;;}
+	</code>
+	<p><b>Note:</b> If you are using _in_query to generate a dynamic derived table where a column may or may not be present in the derived table's primary key, you should always select a static number of PK columns and conditionally NULL out their values, rather than selecting a dynamic number of columns.</p>
+
+	<code class="bad block">
+	view: dynamic_events_rollup {derived_table: {sql:
+		SELECT
+			site as 2pk_site,
+			{% if date.date._in_query %} date as 2pk_date, {% endif %}
+			---
+			COUNT(*) as events
+		FROM events
+		GROUP BY site,date ;;}
+	</code>
+	<code class="good block">
+	view: dynamic_events_rollup {derived_table: {sql:
+		SELECT
+			site as 2pk_site,
+			{% if date.date._in_query %} date
+			{% else %} NULL
+			{% endif %} as 2pk_date,
+			---
+			COUNT(*) as events
+		FROM events
+		GROUP BY site,date ;;}
+	</code>
 	</details>
 <details id="t3"> <!-- Primary key positioning -->
 	<summary><b>T3.</b> Primary key columns must be the first columns in the SELECT clause</summary>
+	<code class="bad block">
+	derived_table: {sql:
+		SELECT
+			COUNT (*) as order_count,
+			user_id as 1pk_user_id
+		FROM orders
+		GROUP BY user_id ;;}
+	</code>
 	</details>
 <details id="t4"> <!-- Grouped PK starts... -->
 	<summary><b>T4.</b> For grouped queries, the PK must start with one, more, or all of the grouped columns</summary>
@@ -352,109 +460,105 @@ Emphasis on opinionated. Don't say I didn't warn you!
 		<p>...unless a limit is also used</p>
 	</details>
 
-<h1 id="other-fields">Other Fields</h1>
+<h1 id="explores">Explores</h1>
 
-<details id="o1"> <!-- No inter-view dependencies -->
-	<summary><b>F...</b> Avoid inter-view dependencies...</summary>
-	<p>... unless this is an (A) field-only view, or (B) tightly coupled view (provide a base explore too!)</p>
-	<p><b>Rationale:</b> Inter-view dependencies interfere with the re-use of the view<p>
-	<code class="block bad">
-	view: users {...}
-	view: orders {
-	  ...
-	  measure: orders_per_user {
-	    sql: ${count} / NULLIF(${users.count},0)
-	  }
-	}
-	explore: orders {} # Errors :(
-	</code>
-
-	<code class="block good">
-	view: users {...}
-	view: orders {...}
-	view: users_orders {
-	  # No need for a sql_table_name or derived_table
-	  measure: orders_per_user {
-	    sql: ${orders.count} / NULLIF(${users.count},0)
-	  }
-	}
-	explore: orders {} #Doesn't break like before!
-	explore: users {
-	  join: orders {...}
-	  join: users_orders {
-	    sql: ;;
-	    # Use `sql` instead of `sql_on` and put some whitespace in it
-	    relationship: one_to_one
-	    view_label: "Orders" #For cleaner explore UI
-	  }
+<details id="e1"> <!-- Primary keys used -->
+	<summary><b>E1</b> The "one" table in any join must be joined on equality constraints on all of the Primary Key Dimensions</summary>
+	<p> This is relevant for any 1:1, 1:m, m:1, 1:0or1 joins. In otherwords, any non-many-to-many join (which you should only be using with great caution)</p>
+	<h5>Examples</h5>
+	<code class="good block">
+	join: users {
+	  relationship: many_to_one
+	  sql_on: ${1pk_user_id} = ${orders.user_id} ;;
 	}
 	</code>
+
+	<code class="bad block">
+	join: users {
+	  relationship: many_to_one
+	  sql_on: ${users.id} = ${orders.user_id} ;;
+	  # ^ I can only _hope_ that this is right, or spend time verifying it
+	}
+	</code>
+
+	<code class="questionable block">
+	join: dates {
+	  relationship: many_to_many
+	  sql_on: ${dates.1pk_date} >= $[users.created_date} AND ${dates.1pk_date} <= $[users.deleted_date} ;;
+	}
+	</code>
+
 	</details>
-<details><!-- No view-labeled fields -->
-	<summary><b>F...</b> Fields should not contain a view_label.</summary>
-	<p><b>Rationale:</b> Field-level view labels can't be overridden by a join. Prefer view-level view labels.</p>
+<details id="e2"> <!-- Join on dist key and sort keys when possible -->
+	<summary><b>E2.</b> Joins should use distribution keys and sort keys when possible</summary>
+	<h5>Examples</h5>
+	<code class="good block">
+	explore: order_items {
+		join: orders {
+			relationship: many_to_one
+			sql_on: ${orders.1pk_id} = ${order_items.order_id}
+				AND ${orders.dpk_user_id} = ${order_items.dpk_user_id}
+			;; # Results in a hash join with no network activity
+		}
+	}
+	</code>
+	<code class="good block">
+	explore: entities {
+		join: eav_attribute1 {
+			relationship: one_to_one
+			sql_on: ${eav_attribute1.2pk_entity_id} = ${entities.id}
+				AND ${eav_attribute1.2pk_attribute_id} = 1
+				AND ${eav_attribute1.dpk_entity_id} = ${order_items.dpk_entity_id}
+				AND ${eav_attribute1.idx_entity_id} = ${order_items.idx_entity_id}
+			;; # Results in a merge join with no network activity
+		}
+		join: eav_attribute2 {
+			relationship: one_to_one
+			sql_on: ${eav_attribute2.2pk_entity_id} = ${entities.id}
+				AND ${eav_attribute2.2pk_attribute_id} = 2
+				AND ${eav_attribute2.dpk_entity_id} = ${order_items.dpk_entity_id}
+				AND ${eav_attribute2.idx_entity_id} = ${order_items.idx_entity_id}
+			;; # Results in a merge join with no network activity
+		}
+	}
+	</code>
+	<p><b>Note:</b> In the EAV example, even though the first part of the primary key, the distribution key, and the sort key all result in `entity_id`, writing them out multiple times with the different key dimensions communicates what they do to anyone reading the join, and should have negligible performance impact.</p>
 	</details>
-<details><!-- Count fields filtered -->
-	<summary><b>F...</b> All type:count measures must specify a filter</summary>
-	<p>"Plain" count fields can/should specify a filter of "primary key dimensions are not null"</p>
-	<p><b>Rationale:</b> By default Looker will implement any non-filtered & non-distinct count field as a `COUNT(*)`. Filtering such "plain" count on PK IS NOT NULL ensures correct counts in all of the following uses of the field: Counting just that table, counting that table when joined on as a one-to-one-or-zero table, counting that table with symmetric aggregates when joined on as a many_to_one table, and counting that table in explores with join paths.</b>
-	<code class="block good">
-	...
+<details id="e3"> <!-- always_filter on sortkey -->
+	<summary><b>E3.</b> Explores should declare `always_filter` on the base table's sort key / parition column / clustered index</summary>
+	<code class="good block">
+	explore: events {
+		always_filter: {
+		...TODO
+		}
+	}
 	</code>
 	</details>
-<details> <!-- Explore-specific fields/views -->
-	<summary><b>F...</b> Explore-specific fields should go in a view named {...?}</summary>
+<details id="e4"> <!-- avoid multiplicative fanout -->
+	<summary><b>E4.</b> Avoid multiplicative fanout</summary>
+	<p>...TODO</p>
 	</details>
-
-<details> <!-- Explore-specific fields/views -->
-	<summary><b>F...</b></summary>
-	</details>
-
-
-<details><!-- Codimension Views -->
-	<summary><b>C...</b> Codimension Views</summary>
-	</details>
-
-<details><!-- Codimension Joins -->
-	<summary><b>C...</b>Codimension Joins</summary>
-	Codimension joins should realias codimensions views to their non-explore specific name.
-	</details>
-
-Codimension views may be replicated for a specific explore or set of view dependencies.
-
-Codimension views should contain only one dimension or dimension group.
-
-
-
-
-
-
-<h1 id="change-management">Change Management</h1>
-
-### C... Definition of Major Changes
-
-### C... Definition of Minor Changes
-
-### C... Major changes that can be deferred
-
-### C... Major changes should promote all deferred changes
-
-### C... Major changes must use new view names
-
-### C... Major changes should document breaking changes
 
 <h1 id="out-of-scope">Out of Scope</h1>
 <p>The following subjects are not in the scope of this ruleset, but are still valuable to know about! These contain links to the most useful resources I could find on these subjects<p>
 <details>
+	<summary>Change management</summary>
+	<p>This is something I really wanted to include, but was not able to this time around. Something like semver. Hopefully a future version will include this. (Pull requests will be considered!)</p>
+	</details>
+<details>
 	<summary>Defining distribution, sort keys, indexes, etc</summary>
-	<p>These are super important, but the strategy for these is complex and couldn't fit in the scope of this ruleset.</p>
-	<!-- <ol>
+	<p>These are super important, but the strategy for these is too broad and complex to fit into this kind of ruleset.</p>
+	<!--However, you can check out some of these useful resources: <ol>
 		<li></li>
 	</ol> -->
 	</details>
 <details>
 	<summary>Whitespace, capitalization</summary>
-	I don't personally care for rules constraining indentation, capitalization, and the like, but if you do, here's a possible style guide: https://gist.github.com/fredbenenson/7bb92718e19138c20591</p>
+	<p>I don't personally care for rules constraining indentation, capitalization, and the like, but if you do, here's a possible <a href="https://gist.github.com/fredbenenson/7bb92718e19138c20591">SQL style guide</a></p>
 	</details>
-
+<details>
+	<summary>EAV Schemas</summary>
+	<p>Entity-Attribute-Value schemas come with their own modeling challenges, but are not relevant to many models, so I decided to leave them out of this ruleset.</p>
+	<!-- However, you can get some guidance by studying these two articles:<p> -->
+	</details>
 </body></html>

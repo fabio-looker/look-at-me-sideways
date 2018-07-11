@@ -24,5 +24,9 @@
   "bugs": {
     "url": "https://github.com/fabio-looker/look-at-me-sideways/issues"
   },
-  "homepage": "https://github.com/fabio-looker/look-at-me-sideways#readme"
+  "homepage": "https://github.com/fabio-looker/look-at-me-sideways#readme",
+  "dependencies": {
+    "lookml-parser": "^3.2.3",
+    "minimist": "^1.2.0"
+  }
 }
