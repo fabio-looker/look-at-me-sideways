@@ -23,8 +23,9 @@
 	code.bad.block::before {content:"# BAD:"}
 	code.bad.block.sql::before {content:"-- BAD:"}
 </style>
-Emphasis on opinionated. Don't say I didn't warn you!
-
+<p>Hi, welcome to my LookML & SQL rules!</p>
+<p>This is a work in progress.</p>
+<p>Also, these rules are quite opinionated, any some people won't like them. I've tried to provide rationales throughout so you can come to your own conclusions. However, at their core, these rules are about making your LookML and SQL reusable, self-explanatory, and reliable.</p>
 <nav><ul>
 <li> <a href="#terms">Terms</a></li>
 <li> <a href="#key-dimensions">Key Dimensions</a></li>
@@ -108,12 +109,12 @@ Emphasis on opinionated. Don't say I didn't warn you!
 
 	</details>
 <details id="k3"> <!-- Primary key location -->
-	<summary><b>K3.</b> Primary Key Dimensions must be defined immediately following the table definition...</summary>
+	<summary><b>K3.</b> Primary Key Dimensions should be defined immediately following the table definition...</summary>
 	<p>... and the table definition _should_ be defined before any other dimensions.</p>
 	<p><b>Rationale:</b> By placing primary keys immediately below a derived table definition, users viewing the view file can easily verify that the primary key dimensions match the derived table's grouping (per rule T...).</p>
 	</details>
 <details id="k4"> <!-- Primary key hidden -->
-	<summary><b>K4.</b> Primary Keys Dimensions should be hidden?	</summary>
+	<summary><b>K4.</b> Primary Keys Dimensions should be hidden</summary>
 	<p><b>Rationale:</b> The audience for PK information is developers. They use it to inform how to join and consume tables, and they can do so equally well with a hidden field.</p>
 	<p><b>Note:</b> If a column that is a primary key should be user facing, you may want to expose it via a separate dimension.</p>
 	</details>
@@ -209,57 +210,56 @@ Emphasis on opinionated. Don't say I didn't warn you!
 	</code>
 	</details>
 <details> <!-- Description or hidden -->
-	<summary> Non-hidden fields should have a filter</summary>
-
+	<summary> Non-hidden fields should have a description</summary>
+	<p><b>Rationale:</b> User experience. Just do it. Lazyness will not save you from this rule!</p>
 	</details>
 
 
 <h1 id="derived-tables">Derived Tables</h1>
 <p><b>Summary:</b> Restrict the ways in which you write the SQL for derived tables in order to make them more modular and their results more realiable and understandable.</p>
-<p><b>Note:</b> Even if you are using an external transformation tool like DBT, these practices are still applicable. Of course, using PDT's allows you to enforce these rules all in one place.</p>
-
+<p><b>Note:</b> These rules in particular use a lot of "must" statements. This is for a reason. If they seem hard to comply with at first, pay attention, they're trying to tell you something :)</p>
 <details id="t1"> <!-- Primary keys required -->
 	<summary><b>T1.</b> Except for exceptions in T... & T..., every query, derived table, CTE, or subquery must SELECT a set of primary key columns following rules T2-T7</summary>
 	<p><b>Rationale:</b> Primary keys define a contract that allows anyone reviewing the logic of a query to evaluate it modularly.
-		Without them, any attempt to troubleshoot a query requires an arbitrarily deep investigation of related subqueries.
-		With them, each query and subquery can be evaluated independently against their declared PK and the declared PK's of the participating tables.</p>
+	Without them, any attempt to troubleshoot a query requires an arbitrarily deep investigation of related subqueries.
+	With them, each query and subquery can be evaluated independently against their declared PK and the declared PK's of the participating tables.</p>
 
-		<code class="good block">
-		view: user_lifetime {derived_table: {sql:
-			SELECT
-				user_id as 1pk_user_id
-				---
-				COUNT(*) as lifetime_orders,
-				SUM(amount) as lifetime_spend
-			FROM orders
-			GROUP BY user_id ;;}
-		</code>
+	<code class="good block">
+	view: user_lifetime {derived_table: {sql:
+		SELECT
+			user_id as 1pk_user_id
+			---
+			COUNT(*) as lifetime_orders,
+			SUM(amount) as lifetime_spend
+		FROM orders
+		GROUP BY user_id ;;}
+	</code>
 
-		<code class="bad block">
-		view: user_lifetime {derived_table: {sql:
-			SELECT
-				user_id,
-				COUNT(*) as lifetime_orders,
-				SUM(amount) as lifetime_spend
-			FROM orders
-			GROUP BY 1 ;;}
-		</code>
+	<code class="bad block">
+	view: user_lifetime {derived_table: {sql:
+		SELECT
+			user_id,
+			COUNT(*) as lifetime_orders,
+			SUM(amount) as lifetime_spend
+		FROM orders
+		GROUP BY 1 ;;}
+	</code>
 
-		<code class="bad block">
-		derived_table: {sql:
-			WITH orders AS (
-				SELECT order_id, SUM(amount) FROM order_items
-				GROUP BY 1
-			)
-			-- ^ The rule applies to CTE's/subqueries as well
-			SELECT
-				user_id as 1pk_user_id
-				---
-				COUNT(*) as lifetime_orders,
-				SUM(amount) as lifetime_spend
-			FROM orders
-			GROUP BY user_id ;;}
-		</code>
+	<code class="bad block">
+	derived_table: {sql:
+		WITH orders AS (
+			SELECT order_id, SUM(amount) FROM order_items
+			GROUP BY 1
+		)
+		-- ^ The rule applies to CTE's/subqueries as well
+		SELECT
+			user_id as 1pk_user_id
+			---
+			COUNT(*) as lifetime_orders,
+			SUM(amount) as lifetime_spend
+		FROM orders
+		GROUP BY user_id ;;}
+	</code>
 	</details>
 <details id="t2"> <!-- Primary key naming -->
 	<summary><b>T2.</b> Primary key columns must be aliased AS {n}pk_{column_name}...</summary>
@@ -312,15 +312,12 @@ Emphasis on opinionated. Don't say I didn't warn you!
 	</details>
 <details id="t4"> <!-- Grouped PK starts... -->
 	<summary><b>T4.</b> For grouped queries, the PK must start with one, more, or all of the grouped columns</summary>
-
 	<h5>Notes</h5>
 	<ul>
 	<li>In most cases, unless you <i>intend</i> to use a window function to create sequence numbers within a partition, the primary key should simply be ALL of the grouped by fields.</li>
 	<li>If you want to join a derived table on only a subset of its columns, what you probably want is to groups by ONLY those columns and then aggregate the rest (see example below)</li>
 	</ul>
-
 	<h5>Examples</h5>
-
 	<code class="block bad">
 	view: instance_daily {derived_table: {sql:
 	SELECT
@@ -381,12 +378,80 @@ Emphasis on opinionated. Don't say I didn't warn you!
 	</details>
 <details id="t5"> <!-- Ungrouped PK starts... -->
 	<summary><b>T5.</b> For ungrouped queries, the PK must start with one, more, or all of the PK's from the many-joined tables</summary>
-
-
+	<p><b>Note:</b> This rule requires some reasoning to evaluate, but with proper PK information, can be done within the context of the current query. For example, the 1-to-1 full outer join example coalesces the PK's from the two sides of the join to come up with the effective primary key of the join.</p>
+	<code class="good block">
+	SELECT
+		sites.1pk_id as 2pk_site_id,
+		dates.1pk_date as 2pk_date,
+		---
+		daily_rollup.count
+	FROM sites
+	CROSS JOIN dates
+	LEFT JOIN daily_rollup
+	  ON  daily_rollup.2pk_site_id = sites.1pk_id,
+	  AND daily_rollup.2pk_site_id = sites.1pk_id
+	</code>
+	<code class="good block">
+	SELECT
+		sessions.1pk_id as 1pk_session_id,
+		---
+		sites.name,
+		dates.is_holiday
+	FROM sites
+	CROSS JOIN dates
+	INNER JOIN sessions
+	  ON  sessions.date = sites.1pk_id,
+	  AND sessions.site_id = dates.1pk_id
+	</code>
+	<code class="good block">
+	SELECT
+		COALSECE(
+		  historical.2pk_site_id,
+		  incremental.2pk_site_id
+		) as 2pk_site_id,
+		COALSECE(
+		  historical.2pk_date,
+		  incremental.2pk_date
+		) as 2pk_date
+		---
+		COALSECE(
+		  incremental.count
+		  historical.count,
+		) as count
+	FROM historical
+	FULL OUTER JOIN incremental
+	  ON  incremental.2pk_site_id = historical.2pk_site_id,
+	  AND incremental.2pk_date = historical.2pk_date
+	</code>
 	</details>
 <details id="t6"> <!-- PK continues with window -->
-	<summary><b>T6.</b> If the SELECT did not use ALL of the available columns from T4 or T5, the PK must continue with a window function... </summary>
-
+	<summary><b>T6.</b> If T4/T5 did not use ALL available columns, the PK must continue with a ROW_NUMBER...</summary>
+	<p>... window function within the partition of the preceding PK columns</p>
+	<p><b>Note:</b> Actually, any window function that produces unique values for each row is acceptable, but this is almost always <code>ROW_NUMBER()</code>.
+	Make sure not to use a <code>RANK</code>-like window function instead of <code>ROW_NUMBER</code>. The former yields duplicate ranks when two rows match. (For example, "Monday, Monday, Tuesday" would have ranks of 1,1,3)</p>
+	<code class="good block">
+	SELECT
+		user_id as 2pk_user_id,
+		ROW_NUMBER() OVER (
+			PARTITION BY user_id
+			ORDER BY id ASC
+		) as 2pk_order_sequence_number,
+		---
+		id as order_id
+	GROUP BY 1,2
+	</code>
+	<code class="bad block">
+	SELECT
+		ROW_NUMBER() as 1pk_id,
+		---
+		*
+	FROM (
+		SELECT site, date, source, count(*) as session_count
+		FROM sessions
+		GROUP BY 1,2,3,4
+	)
+	</code>
+	<p>I only mention the above example because I've actually seen it used. The primary key for this is simply site,date,source. The ROW_NUMBER added as an afterthough is not a primary key. (In this ruleset, it is disallowed by rules T4/T5 which require one or more columns to precede the window function, if any)</p>
 	</details>
 <details id="t7"> <!-- PK may continue with aggregates -->
 	<summary><b>T7.</b> The PK may continue with 0, 1, or more aggregates</summary>
