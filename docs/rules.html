@@ -98,14 +98,14 @@
 
 	<ul>
 	<li> The number can (and must) be 0 in the rare case that you are working with a table with no primary key.
-	<li> For keys with more than one column, all the numbers should be equal to the total number of columns. So, `3pk_a`, `3pk_b`, and `3pk_c`, NOT `1pk_a`, `2pk_b`, and `3pk_c`
-	<li> For keys with more than one columns, this does mean you would need to define it in two ways. Once this way, and once as a single concatenated dimension with `primary_key: yes` (if necessary) so Looker can use it for generating symmetric aggregates. This is a small price to pay for the many instances of time saved looking up primary key information when writing/reading explores.
+	<li> For keys with more than one column, all the numbers should be equal to the total number of columns. So, <code>3pk_a</code>, <code>3pk_b</code>, and <code>3pk_c</code>, NOT <code>1pk_a</code>, <code>2pk_b</code>, and <code>3pk_c</code>.
+	<li> For keys with more than one column, this does mean you would need to define it in two ways. Once this way, and once as a single concatenated dimension with <code>primary_key: yes</code> (if necessary) so Looker can use it for generating symmetric aggregates. This is a small price to pay for the many instances of time saved looking up primary key information when writing/reading explores.
 	</ul>
 
 	</details>
 <details id="k3"> <!-- Primary key location -->
 	<summary><b>K3.</b> Primary Key Dimensions should be defined immediately following the table definition...</summary>
-	<p>... and the table definition _should_ be defined before any other dimensions.</p>
+	<p>... and the table definition should be defined before any other dimensions.</p>
 	<p><b>Rationale:</b> By placing primary keys immediately below a derived table definition, users viewing the view file can easily verify that the primary key dimensions match the derived table's grouping (per rule T...).</p>
 	</details>
 <details id="k4"> <!-- Primary key hidden -->
