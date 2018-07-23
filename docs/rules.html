@@ -269,7 +269,7 @@
 	<p><b>Rationale:</b> <code>sql_trigger_value</code> is an older construct and can have subtle timing issues when multiple tables interact.</p>
 	</details>
 <details id="t2"> <!-- Primary keys required -->
-	<summary><b>T2.</b> Except for exceptions in T9 & T10, every query, derived table, CTE, or subquery must SELECT a set of primary key columns following rules T2-T7</summary>
+	<summary><b>T2.</b> Except for exceptions in T9 & T10, every query, derived table, CTE, or subquery must SELECT a set of primary key columns following rules T3-T8</summary>
 	<p><b>Rationale:</b> Primary keys define a contract that allows anyone reviewing the logic of a query to evaluate it modularly.
 	Without them, any attempt to troubleshoot a query requires an arbitrarily deep investigation of related subqueries.
 	With them, each query and subquery can be evaluated independently against their declared PK and the declared PK's of the participating tables.</p>
