@@ -169,14 +169,14 @@
 	</details>
 <details id="f3"><!-- Count fields filtered -->
 	<summary><b>F3.</b> All type:count measures must specify a filter</summary>
-	<p>"Plain" count fields can/should specify a filter of "primary key dimensions are not null"</p>
+	<p>"Plain" count fields can/should specify a filter of "primary key dimensions (or any non-nullable field) are not null"</p>
 	<p><b>Rationale:</b> By default Looker will implement any non-filtered & non-distinct count field as a `COUNT(*)`. Filtering such "plain" count on PK IS NOT NULL ensures correct counts in all of the following uses of the field: Counting just that table, counting that table when joined on as a one-to-one-or-zero table, counting that table with symmetric aggregates when joined on as a many_to_one table, and counting that table in explores with join paths.</b>
 	<code class="block good">
 	measure: count {
 		type: count
 		filters:{
 			field: 1pk_user_id
-			filter: "-null"
+			value: "-null"
 		}
 	}
 	</code>
@@ -208,7 +208,6 @@
 	<summary><b>F7.</b> Views should provide summary measures</summary>
 	<p><b>Rationale:</b> Models tend to default to providing dimensions for every column. However, grouping by every field in the query is often not what users want. Trust your explore users to understand the nuance and give them both options.</p>
 	<code class="good block">
-	#TODO: drill fields
 	view: sessions {
 		...
 		dimension: source {}
@@ -223,7 +222,9 @@
 			WHEN MIN(${source}) = MAX(${source}) THEN MIN(${source})||' (x'||COUNT(${source})::varchar||')'
 			WHEN COUNT(${source}) = 2 THEN MIN(${source})||', '||MAX(${source})
 			ELSE MIN(${source})||' ...+'||(COUNT(${source})-2)::varchar||'... '||MAX(${source})
-		;;}
+		;;
+		# Drill fields will be useful here!
+		}
 		measure: _campaign {
 			type: string
 			sql: CASE
@@ -253,7 +254,7 @@
 		;;}
 		measure: sessions {
 			type: count
-			filters: TODO {filter:{field:id filter:"-null"}}
+			filters: {field:id filter:"-null"}
 		}
 	}
 	</code>
@@ -264,7 +265,7 @@
 <p><b>Summary:</b> Restrict the ways in which you write the SQL for derived tables in order to make them more modular and their results more realiable and understandable.</p>
 <p><b>Note:</b> These rules in particular use a lot of "must" statements. This is for a reason. If they seem hard to comply with at first, they're trying to tell you something :)</p>
 <details id="t1"> <!-- Triggers use datagroups -->
-	<summary>Triggered PDTs should use datagroups</summary>
+	<summary><b>T1.</b> Triggered PDTs should use datagroups</summary>
 	<p><b>Rationale:</b> <code>sql_trigger_value</code> is an older construct and can have subtle timing issues when multiple tables interact.</p>
 	</details>
 <details id="t2"> <!-- Primary keys required -->
@@ -499,7 +500,7 @@
 		GROUP BY 1,2,3,4
 	)
 	</code>
-	<p>I only mention the above example because I've actually seen it used. The primary key for this is simply site,date,source. The ROW_NUMBER added as an afterthough is not a primary key. (In this ruleset, it is disallowed by rules T4/T5 which require one or more columns to precede the window function, if any)</p>
+	<p>I only mention the above example because I've actually seen it used. The primary key for this is simply site,date,source. The ROW_NUMBER added as an afterthough is not a primary key. (In this ruleset, it is disallowed by rules T5/T6 which require one or more columns to precede the window function, if any)</p>
 	</details>
 <details id="t8"> <!-- PK ends with - - - -->
 	<summary><b>T8.</b> Primary key columns end with "---" on its own line</summary>
@@ -553,7 +554,7 @@
 <details id="t11"><!-- Asserted uniques -->
 	<summary><b>T11.</b> Aggregates which should produce a single value must be asserted</summary>
 	<p><b>Rationale:</b> Rather than trusting/hoping the data will be what you want, we can ensure it and prevent bad data from propagating upstream</p>
-	<p><b>Note:</b> In a dialect where dividing by zero throws an error, this is a good approach. If done in a PDT, the building of the new PDT will fail. TODO: Can you schedule alerts from i__looker on these events?</p>
+	<p><b>Note:</b> In a dialect where dividing by zero throws an error, this is a good approach. If done in a PDT, the building of the new PDT will fail.</p>
 	<code class="block good">
 		SELECT
 		...
@@ -605,13 +606,16 @@
 	</code>
 	<p><b>Note:</b> If you want to select the min/max based on a different column, like date, see <a href="https://discourse.looker.com/t/only-measuring-the-latest-values/6719">this guide</a></p>
 	</details>
-<details id="t14"> <!-- No dynamic persisted tables -->
+<details id="t14"><!-- No dynamic persisted tables -->
 	<summary><b>T14.</b> Persisted derived tables must not use liquid or "dynamic SQL"</summary>
 	<p>To clarify, liquid/dynamic SQL in non-persisted, aka ephemeral, derived tables is fine.</p>
 	<p><b>Rationale:</b> Triggered persistent tables usually don't have the necessary explore context to correctly evaluate the dynamic logic. And even persists_for derived tables do not work as expected with dynamic SQL (confirmed as of v5.14)</p>
 	<p><b>Note:</b> One possible exception may be {{_model._name}}, but still be careful.</p>
 	</details>
-
+<details id="t15"><!-- UNION ALL -->
+	<summary><b>T15.</b>UNION should not be used where UNION ALL is needed or sufficient</summary>
+	<p><b>Rationale:</b> More often than not, developers use UNION instead of UNION ALL unintentionally, with terrible performance implications. Therefore, if you actually need a plain UNION, make that explicit in an accompanying comment.</p> 
+	</details
 <h1 id="explores">Explores</h1>
 
 <details id="e1"> <!-- Primary keys used -->
@@ -676,13 +680,15 @@
 	</details>
 <details id="e3"> <!-- always_filter on sortkey -->
 	<summary><b>E3.</b> Explores should declare `always_filter` on the base table's sort key / parition column / clustered index</summary>
+	<p>For small tables, this won't matter much, but for big tables it will make a big difference, so it's good to be in the habit.<p>
 	<code class="good block">
 	explore: events {
 		always_filter: {
-		...TODO
+			filters:{ field:codim_activity.__date value:"28 days,null"}
 		}
 	}
 	</code>
+	<p><b>Note:</b> This is all that's needed if the filtered table is the base of an explore with only left or inner joins. Otherwise, you can push the filter down into the sql_table_name (or derived table) using <code>{% condition view.always_filtered_field %} table.column {% endcondition %}</code></p>
 	</details>
 <details id="e4"> <!-- avoid multiplicative fanout -->
 	<summary><b>E4.</b> Explores' joins must not cause multiplicative fanout or spurious relationships</summary>
