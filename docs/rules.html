@@ -11,7 +11,7 @@
 	p,ul {width:80%;max-width:40em}
 	li{margin-bottom: 0.5em;}
 	details {padding-left:3em;}
-	summary {margin-left:-3em;}
+	summary {margin-left:-3em; cursor: pointer}
 	a.subtle {color:#559; text-decoration: none;}
 	code.block {display:block; white-space: pre-wrap; max-width:90%;margin:1em 0 1.5em 0; tab-size:2em;}
 	code.good.block {background-color: #EFE; box-shadow: 2px 2px 10px 0px #9C9;}
@@ -561,15 +561,6 @@
 		MIN(col)
 		||SUBSTR('',0 / CASE WHEN MIN(col) = MAX(col) THEN 1 ELSE 0 END)
 		as assert_col
-	</code>
-	<code class="block good">
-	derived_table: account_name_to_account_id
-		SELECT
-			account_name as 1pk_account_id,
-			---
-			CASE MIN
-			FROM accounts
-			GROUP BY account_name
 	</code>
 	</details>
 <details id="t12"><!-- No order by-->
