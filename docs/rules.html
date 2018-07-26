@@ -583,6 +583,7 @@
 				ORDER BY id ASC
 			) as num,
 			id as order_id,
+			FROM orders
 		)
 		WHERE num = 1
 	;;}}
@@ -593,6 +594,8 @@
 			user_id as 1pk_user_id,
 			---
 			MIN(id) as order_id
+		FROM orders
+		GROUP BY user_id
 	;;}}
 	</code>
 	<p><b>Note:</b> If you want to select the min/max based on a different column, like date, see <a href="https://discourse.looker.com/t/only-measuring-the-latest-values/6719">this guide</a></p>
