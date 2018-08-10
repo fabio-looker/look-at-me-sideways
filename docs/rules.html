@@ -556,11 +556,30 @@
 	<p><b>Rationale:</b> Rather than trusting/hoping the data will be what you want, we can ensure it and prevent bad data from propagating upstream</p>
 	<p><b>Note:</b> In a dialect where dividing by zero throws an error, this is a good approach. If done in a PDT, the building of the new PDT will fail.</p>
 	<code class="block good">
+		-- If division by zero throws for your syntax
 		SELECT
-		...
-		MIN(col)
-		||SUBSTR('',0 / CASE WHEN MIN(col) = MAX(col) THEN 1 ELSE 0 END)
-		as assert_col
+			user_guid as 1pk_user_guid,
+			---
+			COUNT(*) as events,
+			MIN(account_id)
+			||SUBSTR('',0 / CASE WHEN MIN(account_id) &lt;> MAX(account_id) THEN 0 ELSE 1 END)
+			^Concat a zero length string for string types, or add 0 for integer types
+			AS account_id
+		FROM events
+		GROUP BY user_guid
+	</code>
+	<code class="block good">
+		--BigQuery - More convenient syntax
+		SELECT
+			user_guid as 1pk_user_guid,
+			---
+			COUNT(*) as events,
+			CASE WHEN MIN(account_id) &lt;> MAX(account_id)
+			THEN ERROR("Key violation in view foo.bar (on column account_id)")
+			ELSE MIN(account_id)
+			END AS account_id
+		FROM events
+		GROUP BY user_guid
 	</code>
 	</details>
 <details id="t12"><!-- No order by-->
