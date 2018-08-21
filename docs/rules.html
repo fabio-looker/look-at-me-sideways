@@ -454,16 +454,16 @@
 	</code>
 	<code class="good block">
 	SELECT
-		COALSECE(
+		COALESCE(
 		  historical.2pk_site_id,
 		  incremental.2pk_site_id
 		) as 2pk_site_id,
-		COALSECE(
+		COALESCE(
 		  historical.2pk_date,
 		  incremental.2pk_date
 		) as 2pk_date
 		---
-		COALSECE(
+		COALESCE(
 		  incremental.count
 		  historical.count,
 		) as count
