@@ -8,138 +8,59 @@ const fs = require("fs")
 const path = require("path")
 const parser = require('lookml-parser')
 const read = f => fs.readFileSync(f,{encoding:'utf-8'})
+const htmlTable = require('./lib/html-table.js')
 
 !async function(){
 
-try{
-		
-		const project = await parser.parseFiles({
-				source: cliArgs.input || cliArgs.i,
-				console
-			})
-		if(project.error){
-				console.error(project.error)
-			}
-		if(project.errors){
-				//project.errors.forEach(w => console.warn(w))
-				console.warn(project.errorReport())
-			}
-		
-		const views = project.files.filter(f=>f._file_type=="view").map(m=>m.views).filter(Boolean).reduce(flatten,[])
-		const modelViews = project.models.map(m=>m.views).filter(Boolean).reduce(flatten,[])
-		console.log(modelViews.map(mv=>mv._view))
-		for( view of views){
-				view.info={}
-				{ // info.pk
-					let pkNamingConvention = d=>d._dimension.match(/^([0-9]+pk_|pk[0-9]+_)([a-z0-9A-Z_]+)$/)
-					if(view.dimensions.some(pkNamingConvention)){
-						view.info.pks = view.dimensions
-								.map(pkNamingConvention)
-								.filter(Boolean)
-								.map(match => match[2])
-					} else if(view.dimensions.some(d=>d.primary_key)){
-							let pkDims=view.dimensions.filter(d=>d.primary_key)
-							if(pkDims.length>1) {
-									view.info.pks = ["Multiple primary_key error"]
-							}else
-							if(pkDims[0].sql && !pkDims[0].sql.match(/^\s*(\$\{TABLE\}\.[._a-zA-Z0-9]+|\$\{[._a-zA-Z0-9]\})\s*$/)) {
-									view.info.pks = ["Complex `primary_key`s not supported"]
-							}else{
-									view.info.pks = [pkDims[0]._dimension]
-							}
-					} else {
-						view.info.pks = ["Ø"]
-					}
-				}
-				{ 
-					let containsCrossViewCriteria = d=>d.sql && d.sql.match(/\$\{[^}]+\.[^}]+\}/)
-					let crossViewMessage = f => f+" contains cross-view references"
-					view.info.warnings=[]
-					.concat((view.dimensions||[]).filter(containsCrossViewCriteria).map(f=>crossViewMessage(f._dimension)))
-					.concat((view.measures||[]).filter(containsCrossViewCriteria).map(f=>crossViewMessage(f._measure)))
-						
-				}
-			}	
-
-
-			var html = (`
-				<p style="text-align:center; color: #AAA; font-size: 0.8em">
-				Warning: This file is programatically generated. Your changes will be overwritten
-				</p>
-
-				<h2>Views</h2>
-				<table>
-				<thead>
-					<tr>
-					<th>Model</th>
-					<th>View</th>
-					<th>File</th>
-					<th>Primary Keys</th>
-					<th>Warnings</th>
-					<th>Errors</th>
-					</tr>
-				</thead>
-				`
-				+views.map(view => `
-					<tr>
-					<td> todo </td>
-					<td> ${view._view} </td>
-					<td> todo </td>
-					<td><ul>`+view.info.pks.map(pk=>`
-						<li>${pk}</li>
-						`).join('\n')+`</ul></td>
-					<td>`+(view.info.warnings.length
-						?	`<details><summary>${view.info.warnings.length} warning(s)</summary>
-							<ul>`+view.info.warnings.map(warn=>`
-								<li>${warn}</li>
-								`).join('\n')+`</ul>`
-						:	''
-					)
-					+`</td>
-					<td>todo</td>
-				`).join("\n")
-				+`
-				</tbody>
-				</table>
-				`)
-			fs.writeFileSync("project-overview.html",html)
-			console.log("./project-overview.md")
-			
-}catch(e){
-	console.error(e)
-	process.exit(1)
-}
-/* Nevermind this
-  PK: Account_id
-	Views:
-	Model		View				Other PK's		Other Dims
-	meta		account								segment,region,MRR,...
-	meta		account_facts						next_renewal_date,
-	meta		account_team		
-	meta		cs_health_calendar	date			score
+try{	
+	console.log("Parsing project...")
+	const project = await parser.parseFiles({
+			source: cliArgs.input || cliArgs.i,
+			console
+		})
+	if(project.error){throw(project.error)}
+	if(project.errors){
+		console.warn("> Issues occurred during parsing (containing files will not be considered):")
+		project.errorReport()
+		}
+	console.log("> Parsing done!")
 	
-  Pk: Date
-  	Views:
-	Model		View				Other PK's		Other Dims
-	pinger		date_rollup			user_id			run_queries, explores, ...
-	meta		cs_health_calendar	account_id		score
-*/
-
-
-// if(lamsIssues.error){
-// 		console.log("It literally can't even")
-// 		console.log(lamsIssues.error)
-// 		goto report
-// 	}
-// else if(lamsIssues.warning){
-// 		console.log()
-// 	}
-// report:
-// fs.writeFileSync("project-overview.md",html)
-// console.log("./project-overview.md")
-// console.log("The End")
-
+	console.log("Checking rules... ")
+	var rules = ['k1-2'] //TODO: This should be dynamic from the folder
+	var messages = []
+	for( let r of rules){
+		console.log("> "+r.toUpperCase())
+		let rule = require("./rules/"+r+".js")
+		let result = rule(project)
+		messages = messages.concat(result.messages.map(msg=>({rule:r, ...msg})))
+		}
+	console.log("> Rules done!")
+	
+	console.log("Writing summary files...")
+	fs.writeFileSync("index.html",htmlTable(messages,{
+		title:"Views",
+		filter:msg=>msg.primary_keys!==undefined,
+		grouping:["primary_keys"],
+		columns:["path","description"]
+		}))
+	console.log("> View index done")
+	fs.writeFileSync("issues.html",htmlTable(messages,{
+		title:"Issues",
+		filter:msg=>(msg.level=="warn"||msg.level=="error") && !msg.exempt,
+		columns:["level","rule","description","path"],
+		sort:["level","rule"]
+		}))
+	console.log("> Issue summary done")
+	console.log("> Summary files done!")
+	
+	/* For CI integration?
+	var errors = messages.filter(msg=>msg.level=="error" && !msg.exempt)
+	for(e of errors){console.error(e.path,e.rule,e.description)}
+	var warnings = messages.filter(msg=>msg.level=="warning" && !msg.exempt)
+	for(w of warnings){console.warn(w.path,w.rule,e.description)}
+	*/
+	}catch(e){
+		console.error(e)
+		process.exit(1)
+	}
 }()
-
-
-function flatten(a,b){return a.concat(b)}
