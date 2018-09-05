@@ -8,7 +8,7 @@ module.exports = function(
 	for(file of project.files){
 		let views = file.views || [] 
 		for(view of views){
-			let path = file._file_path+"#view:"+view._view
+			let path = "/projects/"+project.name+"/files/"+file._file_path+"#view:"+view._view
 			let pkDimensions = view.dimensions.filter(pkNamingConvention)
 			if(!pkDimensions.length){
 				let rule = "K1", exempt = isExempt(file,rule) || isExempt(view,rule)
@@ -35,12 +35,15 @@ module.exports = function(
 					})
 				continue
 				}
-			messages.push({
-				level:"info",
-				path,
-				view:view._view,
-				primary_keys:pkDimensions.map(pkNamingConvention).map(match=>match[2]).join(", ")
-				})
+			for(pkDimension of pkDimensions){
+				messages.push({
+					level:"info",
+					primaryKey: pkNamingConvention(pkDimension)[2],
+					path,
+					view:view._view,
+					primaryKeys:pkDimensions.map(pkNamingConvention).map(match=>match[2]).join(", ")
+					})
+				}
 			}
 		}
 	return {

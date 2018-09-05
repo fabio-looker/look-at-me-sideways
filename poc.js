@@ -9,6 +9,7 @@ const path = require("path")
 const parser = require('lookml-parser')
 const read = f => fs.readFileSync(f,{encoding:'utf-8'})
 const htmlTable = require('./lib/html-table.js')
+// CONTINUE HERE to add project name for bulding links
 
 !async function(){
 
@@ -18,11 +19,17 @@ try{
 			source: cliArgs.input || cliArgs.i,
 			console
 		})
-	if(project.error){throw(project.error)}
 	if(project.errors){
 		console.warn("> Issues occurred during parsing (containing files will not be considered):")
 		project.errorReport()
 		}
+	if(project.error){throw(project.error)}
+	project.name = false 
+		//|| check for a project manifest file?
+		|| cliArgs["project-name"] 
+		|| (''+process.cwd()).split(path.sep).filter(Boolean).slice(-1)[0]	//The current directory. May not actually be the project name...
+		|| "unknown_project"
+		
 	console.log("> Parsing done!")
 	
 	console.log("Checking rules... ")
@@ -38,17 +45,29 @@ try{
 	
 	console.log("Writing summary files...")
 	fs.writeFileSync("index.html",htmlTable(messages,{
-		title:"Views",
-		filter:msg=>msg.primary_keys!==undefined,
-		grouping:["primary_keys"],
-		columns:["path","description"]
+		title:"Views by Primary Key",
+		filter:msg=>msg.primaryKey!==undefined,
+		grouping:["primaryKey"],
+		columns:[
+			function view(msg){return html`${msg.view} <a href="${msg.path}" style="text-decoration: none">⧉</a>`},
+			"primaryKeys",
+			"description"]
 		}))
-	console.log("> View index done")
+	console.log("> Index done")
 	fs.writeFileSync("issues.html",htmlTable(messages,{
 		title:"Issues",
 		filter:msg=>(msg.level=="warn"||msg.level=="error") && !msg.exempt,
-		columns:["level","rule","description","path"],
-		sort:["level","rule"]
+		sort:["level","rule"],
+		grouping:"rule",
+		summaries: [
+			function errors(total,row){return (total||0)+(row.level=="error"?1:0)},
+			function warnings(total,row){return (total||0)+(row.level=="warning"?1:0)}
+			//,function highestLevel(prev,row){return ["error","warning","info"].find(lvl=>(lvl==prev||lvl==row.level)&&lvl)||"none"}
+			],
+		columns:[
+			"level",
+			function description(row){return html`${row.description} <a href="${row.path}" style="text-decoration: none">⧉</a>`}
+			]
 		}))
 	console.log("> Issue summary done")
 	console.log("> Summary files done!")
@@ -64,3 +83,20 @@ try{
 		process.exit(1)
 	}
 }()
+function html(glue, ...vars){
+		return glue.map((g,i)=>g+h(vars[i])).join("")
+	}
+function h(str){
+	return (""+(str===undefined?"":str))
+	.replace(/&/g, "&amp;")
+	.replace(/</g, "&lt;")
+	.replace(/"/g, "&quot;")
+	.replace(/'/g, "&#039;");
+	}
+function format(str){
+		str = (""+(str===undefined?"":str))
+		if(str.match(/^_?[a-z][a-z0-9]*_[_a-z0-9]+$/)){return str} //Don't touch lookml snake case like things
+		return str
+			.replace(/^\s*[a-z]/,str=>str.toUpperCase()) //Capitalize first
+			.replace(/[a-z][A-Z]/g,str=>str[0]+" "+str[1]) //Camelcase to spaces
+	}
