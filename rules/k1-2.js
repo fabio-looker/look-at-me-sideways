@@ -35,6 +35,22 @@ module.exports = function(
 					})
 				continue
 				}
+			if(!pkDimensions.reduce(((min,x)=>x._n<min?x._n:min),99) !== 0 && !pkDimensions.reduce(((max,x)=>x._n>max?x._n:max),0) !== pkDimensions.length ){
+				let rule = "K3", exempt = isExempt(file,rule) || isExempt(view,rule)
+				messages.push({
+					path, rule, exempt, level:"warning",
+					description:`Primary Key Dimensions in ${view._view} are not declared before other dimensions`
+					})
+				}
+			if(pkDimensions.some(dim=>!dim.hidden)){
+				let rule = "K3", exempt = isExempt(file,rule) || isExempt(view,rule)
+				let dims = pkDimensions.filter(dim=>!dim.hidden).map(dim=>dim._dimension).join(", ")
+				messages.push({
+					path, rule, exempt, level:"warning",
+					description:`Primary Key Dimensions (${dims}) in ${view._view} are not hidden`
+					hint:`If you want the column to be user-facing, make it the sql for both a hidden Primary Key Dimension, and a separate non-hidden dimension.`
+					})
+				}
 			for(pkDimension of pkDimensions){
 				messages.push({
 					level:"info",
