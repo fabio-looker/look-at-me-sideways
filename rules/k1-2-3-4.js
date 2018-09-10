@@ -43,12 +43,12 @@ module.exports = function(
 					})
 				}
 			if(pkDimensions.some(dim=>!dim.hidden)){
-				let dims = pkDimensions.filter(dim=>!dim.hidden).map(dim=>dim._dimension).join(", ")
-				let rule = "K4", exempt = isExempt(file,rule) || isExempt(view,rule) || 
-				let dims = pkDimensions.filter(dim=>!dim.hidden).map(dim=>dim._dimension).join(", ")
+				let dims = pkDimensions.filter(dim=>!dim.hidden)
+				let rule = "K4", exempt = isExempt(file,rule) || isExempt(view,rule) || dims.every(d=>isExempt(d,rule))
+				let dimNames = dims.map(dim=>dim._dimension).join(", ")
 				messages.push({
 					path, rule, exempt, level:"warning",
-					description:`Primary Key Dimensions (${dims}) in ${view._view} are not hidden`
+					description:`Primary Key Dimensions (${dimNames}) in ${view._view} are not hidden`,
 					hint:`If you want the column to be user-facing, make it the sql for both a hidden Primary Key Dimension, and a separate non-hidden dimension.`
 					})
 				}
