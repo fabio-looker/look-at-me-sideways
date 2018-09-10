@@ -9,7 +9,6 @@ const path = require("path")
 const parser = require('lookml-parser')
 const read = f => fs.readFileSync(f,{encoding:'utf-8'})
 const htmlTable = require('./lib/html-table.js')
-// CONTINUE HERE to add project name for bulding links
 
 !async function(){
 
@@ -33,7 +32,7 @@ try{
 	console.log("> Parsing done!")
 	
 	console.log("Checking rules... ")
-	var rules = ['k1-2'] //TODO: This should be dynamic from the folder
+	var rules = ['k1-2-3-4'] //TODO: This should be dynamic from the folder
 	var messages = []
 	for( let r of rules){
 		console.log("> "+r.toUpperCase())

@@ -43,7 +43,8 @@ module.exports = function(
 					})
 				}
 			if(pkDimensions.some(dim=>!dim.hidden)){
-				let rule = "K3", exempt = isExempt(file,rule) || isExempt(view,rule)
+				let dims = pkDimensions.filter(dim=>!dim.hidden).map(dim=>dim._dimension).join(", ")
+				let rule = "K4", exempt = isExempt(file,rule) || isExempt(view,rule) || 
 				let dims = pkDimensions.filter(dim=>!dim.hidden).map(dim=>dim._dimension).join(", ")
 				messages.push({
 					path, rule, exempt, level:"warning",
