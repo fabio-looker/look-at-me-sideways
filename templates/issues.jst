@@ -1,0 +1,60 @@
+{{! let grouping = ctx.fns.groupBy({
+		grouping:["rule"],
+		summaries:{
+			count: (total,msg) => (total||0)+1,
+			errors: (total,msg) => (total||0)+(msg.level=="error"),
+			warnings: (total,msg) => (total||0)+(msg.level=="warning")
+			},
+		});
+	let subset = ctx.messages.filter(msg=>(msg.level=="warning"||msg.level=="error"));
+	let issues = subset.filter(msg=>!msg.exempt).reduce(grouping,null);
+	let exempt = subset.filter(msg=> msg.exempt).reduce(grouping,null);
+	}}---
+title: {{?issues.summaries.count}}Issues - {{=issues.summaries.errors||"0"}}⛔ {{=issues.summaries.warnings||"0"}}⚠️  {{??}}No Issues{{?}}
+navigation: true
+---
+
+{{?issues}}
+{{= renderRecursive(issues,{rootName:"Issues"}) }}
+{{??}}
+<p>No issues to report</p>
+{{?}}
+
+{{?exempt}}
+<details><summary><b>Exemptions</b></summary>
+{{= renderRecursive(exempt,{rootName:""}) }}
+</details>
+{{?}}
+
+{{! function renderRecursive(group,{lvl=0,rootName}){var out="";}}
+	<details style="margin-left: {{=2*lvl}}em" {{?lvl<1}}open="open"{{?}}>
+		<summary style="margin-left:-2em;border-bottom:solid 1px #333;">
+			<b>{{&ctx.fns.format(rootName||group.key)}}</b>
+			(
+			{{?group.summaries.errors}}   {{=group.summaries.errors}}⛔ {{?}}
+			{{?group.summaries.warnings}} {{=group.summaries.warnings}}⚠️ {{?}}
+			)
+		</summary>
+		{{?group.data}}
+			<table style="border:solid 1px #ccc">
+			<thead style="background-color:darkblue;color:white"><tr>
+				<th>Level</th>
+				<th>Location</th>
+				<th>Description</th>
+			</tr></thead>
+			<tbody>
+			{{*group.data :data:d }}
+			<tr>
+				<td>{{={error:"⛔",warning:"⚠️"}[data.level]||data.level}}</td>
+				<td>{{&data.location}} {{?data.path}}<a href="{{=data.path}}" style="text-decoration: none">⧉</a>{{?}}</td>
+				<td>{{=data.description}}</td>
+			</tr>
+			{{*}}
+			</tbody>
+			</table>
+		{{?}}
+		{{*Object.values(group.subgroups).sort((a,b)=>a.key.localeCompare(b.key)) :subgroup:sg}}
+			{{=renderRecursive(subgroup,{lvl:lvl+1})}}
+		{{*}}
+	</details>
+	{{! return out;} }}

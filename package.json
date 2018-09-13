@@ -26,6 +26,7 @@
   },
   "homepage": "https://github.com/fabio-looker/look-at-me-sideways#readme",
   "dependencies": {
+    "dot": "^1.1.2",
     "lookml-parser": "^3.2.6",
     "minimist": "^1.2.0"
   }

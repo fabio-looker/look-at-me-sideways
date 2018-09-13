@@ -7,8 +7,24 @@ const cliArgs = require('minimist')(process.argv.slice(
 const fs = require("fs")
 const path = require("path")
 const parser = require('lookml-parser')
-const read = f => fs.readFileSync(f,{encoding:'utf-8'})
-const htmlTable = require('./lib/html-table.js')
+const dot = require("dot")
+const templateFunctions = require('./lib/template-functions.js')
+
+dot.templateSettings = {
+	...dot.templateSettings,
+	evaluate:    /\{\{!([\s\S]+?)\}\}/g,
+	interpolate: /\{\{=([\s\S]+?)\}\}/g,
+	encode:      /\{\{&([\s\S]+?)\}\}/g,
+	conditional: /\{\{\?(\?)?\s*([\s\S]*?)\s*\}\}/g,
+	iterate:     /\{\{\*\s*(?:\}\}|([\s\S]+?)\s*\:\s*([\w$]+)\s*(?:\:\s*([\w$]+))?\s*\}\})/g,
+	varname: "ctx",
+	strip:false
+	}
+dot.process({ path: path.join(__dirname,"templates")})
+const templates = {
+	developer: require('./templates/developer'),
+	issues: require('./templates/issues')
+	}
 
 !async function(){
 
@@ -43,32 +59,11 @@ try{
 	console.log("> Rules done!")
 	
 	console.log("Writing summary files...")
-	fs.writeFileSync("index.html",htmlTable(messages,{
-		title:"Views by Primary Key",
-		filter:msg=>msg.primaryKey!==undefined,
-		grouping:["primaryKey"],
-		columns:[
-			function view(msg){return html`${msg.view} <a href="${msg.path}" style="text-decoration: none">⧉</a>`},
-			"primaryKeys",
-			"description"]
-		}))
-	console.log("> Index done")
-	fs.writeFileSync("issues.html",htmlTable(messages,{
-		title:"Issues",
-		filter:msg=>(msg.level=="warn"||msg.level=="error") && !msg.exempt,
-		sort:["level","rule"],
-		grouping:"rule",
-		summaries: [
-			function errors(total,row){return (total||0)+(row.level=="error"?1:0)},
-			function warnings(total,row){return (total||0)+(row.level=="warning"?1:0)}
-			//,function highestLevel(prev,row){return ["error","warning","info"].find(lvl=>(lvl==prev||lvl==row.level)&&lvl)||"none"}
-			],
-		columns:[
-			"level",
-			function description(row){return html`${row.description} <a href="${row.path}" style="text-decoration: none">⧉</a>`}
-			]
-		}))
+	fs.writeFileSync("developer.md",templates.developer({messages,fns:templateFunctions}).replace(/\n\t+/g,"\n"))
+	console.log("> Developer index done")
+	fs.writeFileSync("issues.md",templates.issues({messages,fns:templateFunctions}).replace(/\n\t+/g,"\n"))
 	console.log("> Issue summary done")
+	
 	console.log("> Summary files done!")
 	
 	/* For CI integration?
@@ -82,20 +77,3 @@ try{
 		process.exit(1)
 	}
 }()
-function html(glue, ...vars){
-		return glue.map((g,i)=>g+h(vars[i])).join("")
-	}
-function h(str){
-	return (""+(str===undefined?"":str))
-	.replace(/&/g, "&amp;")
-	.replace(/</g, "&lt;")
-	.replace(/"/g, "&quot;")
-	.replace(/'/g, "&#039;");
-	}
-function format(str){
-		str = (""+(str===undefined?"":str))
-		if(str.match(/^_?[a-z][a-z0-9]*_[_a-z0-9]+$/)){return str} //Don't touch lookml snake case like things
-		return str
-			.replace(/^\s*[a-z]/,str=>str.toUpperCase()) //Capitalize first
-			.replace(/[a-z][A-Z]/g,str=>str[0]+" "+str[1]) //Camelcase to spaces
-	}
