@@ -1,2 +1,4 @@
 node_modules
 templates/*.js
+*.md
+*.lkml
