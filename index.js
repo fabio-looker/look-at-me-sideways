@@ -67,12 +67,27 @@ const templates = {
 
 		console.log('> Summary files done!');
 
-	/* For CI integration?
-	var errors = messages.filter(msg=>msg.level=="error" && !msg.exempt)
-	for(e of errors){console.error(e.path,e.rule,e.description)}
-	var warnings = messages.filter(msg=>msg.level=="warning" && !msg.exempt)
-	for(w of warnings){console.warn(w.path,w.rule,e.description)}
-	*/
+		/* For CI integration?
+		var errors = messages.filter(msg=>msg.level=="error" && !msg.exempt)
+		for(e of errors){console.error(e.path,e.rule,e.description)}
+		var warnings = messages.filter(msg=>msg.level=="warning" && !msg.exempt)
+		for(w of warnings){console.warn(w.path,w.rule,e.description)}
+		*/
+		let errors = messages.filter((msg) => {
+			return msg.level==='error' && !msg.exempt;
+		});
+		let warnings = messages.filter((msg) => {
+			return msg.level==='warning' && !msg.exempt;
+		});
+
+		const buildStatus = errors.length ? 'FAILED' : 'PASSED';
+		console.log(`BUILD ${buildStatus}: ${errors.length} errors and ${warnings.length} warnings found. Check .md files for details.`);
+
+		if (errors.length) {
+			process.exit(1);
+		} else {
+			process.exit(0);
+		}
 	} catch (e) {
 		console.error(e);
 		process.exit(1);
