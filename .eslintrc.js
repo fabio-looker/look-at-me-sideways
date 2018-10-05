@@ -15,7 +15,7 @@ module.exports = {
     "rules": {
         "no-console": "off",
         "max-len": 0,
-        "indent": ["tab"],
+        "indent": ["error", "tab"],
         "no-tabs": 0
     }
 };
