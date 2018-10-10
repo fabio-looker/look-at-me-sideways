@@ -94,6 +94,6 @@ module.exports = function(
 		return arr.indexOf(x)==i;
 	}
 	function isExempt(obj, rule) {
-		return !!(obj.rule_exemptions && obj.rule_exemptions.contains && obj.rule_exemptions.contains(rule));
+		return !!(obj.rule_exemptions && obj.rule_exemptions.includes && obj.rule_exemptions.includes(rule));
 	}
 };
