@@ -1,7 +1,8 @@
 module.exports = {
     "env": {
         "browser": true,
-        "node": true
+        "node": true,
+        "jest/globals": true
     },
     "parserOptions": {
         "ecmaVersion": 6,
@@ -17,5 +18,8 @@ module.exports = {
         "max-len": 0,
         "indent": ["error", "tab"],
         "no-tabs": 0
-    }
+    },
+    "plugins": [
+        "jest"
+    ]
 };
