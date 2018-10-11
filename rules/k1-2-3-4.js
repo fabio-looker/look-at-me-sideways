@@ -3,7 +3,8 @@ module.exports = function(
 ) {
 	let messages = [];
 	const pkNamingConvention = (d)=>d._dimension.match(/^([0-9]+pk|pk[0-9]+)_([a-z0-9A-Z_]+)$/);
-	for (let file of project.files) {
+	let files = project.files || []
+	for (let file of files) {
 		let views = file.views || [];
 		for (let view of views) {
 			let location = 'view: '+view._view;
