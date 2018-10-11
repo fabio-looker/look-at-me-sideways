@@ -164,11 +164,11 @@
 	}
 	</code>
 	</details>
-<details id="f2"><!-- No view-labeled fields -->
+<details id="f2"> <!-- No view-labeled fields -->
 	<summary><b>F2.</b> Fields should not contain a view_label.</summary>
 	<p><b>Rationale:</b> Field-level view labels can't be overridden by a join. Prefer view-level view labels.</p>
 	</details>
-<details id="f3"><!-- Count fields filtered -->
+<details id="f3"> <!-- Count fields filtered -->
 	<summary><b>F3.</b> All type:count measures must specify a filter</summary>
 	<p>"Plain" count fields can/should specify a filter of "primary key dimensions (or any non-nullable field) are not null"</p>
 	<p><b>Rationale:</b> By default Looker will implement any non-filtered & non-distinct count field as a `COUNT(*)`. Filtering such "plain" count on PK IS NOT NULL ensures correct counts in all of the following uses of the field: Counting just that table, counting that table when joined on as a one-to-one-or-zero table, counting that table with symmetric aggregates when joined on as a many_to_one table, and counting that table in explores with join paths.</b>
