@@ -37,6 +37,7 @@ describe('Rules', () => {
 			files: [{
 				'view': [{}],
 				'views': [{
+					'sql_table_name':'tbl',
 					'dimensions': [{
 						primary_key: true,
 						hidden: true,
@@ -105,9 +106,9 @@ describe('Rules', () => {
 			failMessageK1.exempt = true;
 			expect(rules(project)).toContainObject(failMessageK1);
 		});
-		it('should error if view file is emtpy', () => {
-			project.files[0].views[0] = [];
-			expect(rules(project)).toContainObject(failMessageK1);
+		it('should not error if there is no sql_table_name', () => {
+			project.files[0].views[0].sql_table_name = undefined;
+			expect(rules(project)).not.toContainObject(failMessageK1);
 		});
 	});
 
