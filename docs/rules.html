@@ -47,7 +47,7 @@
 	<code class="block good">
 	view: carriers {
 		sql_table_name: faa.carriers ;;
-		dimension: 1pk_carrier_id {
+		dimension: pk1_carrier_id {
 			hidden: yes
 			primary_key: yes
 			sql:${TABLE}.id;;
@@ -57,7 +57,7 @@
 
 	</details>
 <details id="k2"> <!-- Primary key naming -->
-	<summary><b>K2.</b> Primary Key Dimensions must be named like <code>{n}pk_{key_name}</code>...</summary>
+	<summary><b>K2.</b> Primary Key Dimensions must be named like <code>pk{n}_{key_name}</code>...</summary>
 	<p>..., where n is the total number of columns that form the primary key, and which may be omitted if it is 1, and key_name is any descriptive name.</p>
 	<p><b>Rationale:</b> With this naming convention, anyone creating a join can conclusively find the correct logic without having to investigate:</p>
 
@@ -68,27 +68,27 @@
 	<code class="block good">
 	view: membership {
 	   sql_table_name: membership ;;
-	   dimension: 2pk_user_id {hidden:yes sql:${TABLE}.user_id;;}
-	   dimension: 2pk_group_id {hidden:yes sql:${TABLE}.group_id;;}
+	   dimension: pk2_user_id {hidden:yes sql:${TABLE}.user_id;;}
+	   dimension: pk2_group_id {hidden:yes sql:${TABLE}.group_id;;}
 	   dimension: user_x_group {
 	      hidden:yes
 	      primary_key: yes
-	      sql: ${2pk_user_id} || 'x' || ${2pk_group_id} ;;
+	      sql: ${pk2_user_id} || 'x' || ${pk2_group_id} ;;
 	   }
 	}
 
 	explore: invitations {
 	  join: membership {
 	    relationship: many_to_one
-	    sql_on: ${membership.2pk_user_id} = ${invitations.to_user_id}
-	      AND   ${membership.2pk_group_id} = ${invitations.group_id} ;;
+	    sql_on: ${membership.pk2_user_id} = ${invitations.to_user_id}
+	      AND   ${membership.pk2_group_id} = ${invitations.group_id} ;;
 	    # ^ I can tell there MUST be only one membership. Looks good.
 	  }
 	}
 	explore: users {
 	  join: membership {
 	    relationship: many_to_one
-	    sql_on: ${membership.2pk_user_id} = ${users.id} ;;
+	    sql_on: ${membership.pk2_user_id} = ${users.id} ;;
 	    # Uh-oh, something is wrong here!
 	  }
 	}
@@ -97,11 +97,12 @@
 	<h5>Notes</h5>
 
 	<ul>
-	<li> The number can (and must) be 0 in the rare case that you are working with a table with no primary key.
-	<li> For keys with more than one column, all the numbers should be equal to the total number of columns. So, <code>3pk_a</code>, <code>3pk_b</code>, and <code>3pk_c</code>, NOT <code>1pk_a</code>, <code>2pk_b</code>, and <code>3pk_c</code>.
-	<li> For keys with more than one column, this does mean you would need to define it in two ways. Once this way, and once as a single concatenated dimension with <code>primary_key: yes</code> (if necessary) so Looker can use it for generating symmetric aggregates. This is a small price to pay for the many instances of time saved looking up primary key information when writing/reading explores.
+	<li> The number can (and must) be 0 in the rare case that you are working with a table with no primary key.</li>
+	<li> The name should be descriptive outside of the context of the view. So, prefer <code>pk1_account_id</code> over <code>pk1_id</code>. This way, views that logically share one or more primary keys can be recognized.</li>
+	<li> For keys with more than one column, all the numbers should be equal to the total number of columns. So, <code>pk3_a</code>, <code>pk3_b</code>, and <code>pk3_c</code>, NOT <code>pk1_a</code>, <code>pk1_b</code>, and <code>pk1_c</code>.</li>
+	<li> For keys with more than one column, this does mean you would need to define it in two ways. Once this way, and once as a single concatenated dimension with <code>primary_key: yes</code> (if necessary) so Looker can use it for generating symmetric aggregates. This is a small price to pay for the many instances of time saved looking up primary key information when writing/reading explores.</li>
+	<li> An earlier version of these guidelines specified a naming convention starting with <code>{n}pk</code>. This has been changed to reflect the fact that many databases do not allow column names to start with a number.</li>
 	</ul>
-
 	</details>
 <details id="k3"> <!-- Primary key location -->
 	<summary><b>K3.</b> Primary Key Dimensions should be defined immediately following the table definition...</summary>
@@ -115,7 +116,7 @@
 	</details>
 <details id="k5"> <!-- Distribution dimensions -->
 	<summary><b>K5.</b> Views based on tables with a <a class="subtle" href="#glossary-dist-key">distribution key</a> should define a Distribution Key Dimension...</summary>
-	<p>...named like <code>dpk_{key_name}</code></p>
+	<p>...named like <code>pkd_{key_name}</code></p>
 	<p><b>Rationale:</b> By naming it similarly to Primary Keys, it will be suggested to anyone joining on a view as a possible join key. At the same time, the use of a `d` instead of a number allows it to be differentiated from a primary key</p>
 	<p><b>Note:</b> If your database supports multiple projections of data, you may want to come up with a more sophisticated naming scheme instead.</p>
 	</details>
@@ -175,7 +176,7 @@
 	measure: count {
 		type: count
 		filters:{
-			field: 1pk_user_id
+			field: pk1_user_id
 			value: "-null"
 		}
 	}
@@ -189,7 +190,7 @@
 <details id="f5"> <!-- ID fields hidden -->
 	<summary><b>F5.</b> ID fields that do not have a business usage should be hidden</summary>
 	<code class="good block">
-	view: order_items { ... 1pk_order_item_id {hidden:yes}}
+	view: order_items { ... pk1_order_item_id {hidden:yes}}
 	</code>
 	</details>
 <details id="f6"> <!-- FK ID fields hidden -->
@@ -277,7 +278,7 @@
 	<code class="good block">
 	view: user_lifetime {derived_table: {sql:
 		SELECT
-			user_id as 1pk_user_id
+			user_id as pk1_user_id
 			---
 			COUNT(*) as lifetime_orders,
 			SUM(amount) as lifetime_spend
@@ -303,7 +304,7 @@
 		)
 		-- ^ The rule applies to CTE's/subqueries as well
 		SELECT
-			user_id as 1pk_user_id
+			user_id as pk1_user_id
 			---
 			COUNT(*) as lifetime_orders,
 			SUM(amount) as lifetime_spend
@@ -312,13 +313,13 @@
 	</code>
 	</details>
 <details id="t3"> <!-- Primary key naming -->
-	<summary><b>T3.</b> Primary key columns must be aliased AS {n}pk_{column_name}...</summary>
+	<summary><b>T3.</b> Primary key columns must be aliased AS pk{n}_{column_name}...</summary>
 	<p>...where {n} is the total number of columns in the primary key</p>
 	<code class="good block">
 	view: events_rollup {derived_table: {sql:
 		SELECT
-			site as 2pk_site,
-			date as 2pk_date,
+			site as pk2_site,
+			date as pk2_date,
 			---
 			COUNT(*) as events
 		FROM events
@@ -329,8 +330,8 @@
 	<code class="bad block">
 	view: dynamic_events_rollup {derived_table: {sql:
 		SELECT
-			site as 2pk_site,
-			{% if date.date._in_query %} date as 2pk_date, {% endif %}
+			site as pk2_site,
+			{% if date.date._in_query %} date as pk2_date, {% endif %}
 			---
 			COUNT(*) as events
 		FROM events
@@ -339,10 +340,10 @@
 	<code class="good block">
 	view: dynamic_events_rollup {derived_table: {sql:
 		SELECT
-			site as 2pk_site,
+			site as pk2_site,
 			{% if date.date._in_query %} date
 			{% else %} NULL
-			{% endif %} as 2pk_date,
+			{% endif %} as pk2_date,
 			---
 			COUNT(*) as events
 		FROM events
@@ -355,7 +356,7 @@
 	derived_table: {sql:
 		SELECT
 			COUNT (*) as order_count,
-			user_id as 1pk_user_id
+			user_id as pk1_user_id
 		FROM orders
 		GROUP BY user_id ;;}
 	</code>
@@ -370,8 +371,8 @@
 	<code class="block bad">
 	view: instance_daily {derived_table: {sql:
 	SELECT
-		events.instance_id as 2pk_instance_id,
-		events.event_date as 2pk_event_date,
+		events.instance_id as pk2_instance_id,
+		events.event_date as pk2_event_date,
 		---
 		events.app_version,
 		COUNT(*) as events
@@ -383,9 +384,9 @@
 	<code class="block questionable">
 	view: instance_daily {derived_table: {sql:
 	SELECT
-		events.instance_id as 3pk_instance_id,
-		events.event_date as 3pk_event_date,
-		events.app_version as 3pk_app_version,
+		events.instance_id as pk3_instance_id,
+		events.event_date as pk3_event_date,
+		events.app_version as pk3_app_version,
 		---
 		COUNT(*) as events
 	FROM events
@@ -396,11 +397,11 @@
 	<code class="block questionable">
 	view: instance_daily {derived_table: {sql:
 	SELECT
-		events.instance_id as 3pk_instance_id,
-		events.event_date as 3pk_event_date,
+		events.instance_id as pk3_instance_id,
+		events.event_date as pk3_event_date,
 		ROW_NUMBER() OVER (
 			PARTITION BY events.instance_id, events.event_date
-		) as 3pk_app_version_sequence
+		) as pk3_app_version_sequence
 		---
 		events.app_version,
 		COUNT(*) as events
@@ -414,8 +415,8 @@
 	<code class="block good">
 	view: instance_daily {derived_table: {sql:
 	SELECT
-		events.instance_id as 2pk_instance_id,
-		events.event_date as 2pk_event_date,
+		events.instance_id as pk2_instance_id,
+		events.event_date as pk2_event_date,
 		---
 		MAX(events.app_version) as app_version,
 		-- Maybe min too depending on business logic
@@ -430,38 +431,38 @@
 	<p><b>Note:</b> This rule requires some reasoning to evaluate, but with proper PK information, can be done within the context of the current query. For example, the 1-to-1 full outer join example coalesces the PK's from the two sides of the join to come up with the effective primary key of the join.</p>
 	<code class="good block">
 	SELECT
-		sites.1pk_id as 2pk_site_id,
-		dates.1pk_date as 2pk_date,
+		sites.pk1_id as pk2_site_id,
+		dates.pk1_date as pk2_date,
 		---
 		daily_rollup.count
 	FROM sites
 	CROSS JOIN dates
 	LEFT JOIN daily_rollup
-	  ON  daily_rollup.2pk_site_id = sites.1pk_id,
-	  AND daily_rollup.2pk_site_id = sites.1pk_id
+	  ON  daily_rollup.pk2_site_id = sites.pk2_id,
+	  AND daily_rollup.pk2_site_id = sites.pk2_id
 	</code>
 	<code class="good block">
 	SELECT
-		sessions.1pk_id as 1pk_session_id,
+		sessions.pk1_id as pk1_session_id,
 		---
 		sites.name,
 		dates.is_holiday
 	FROM sites
 	CROSS JOIN dates
 	INNER JOIN sessions
-	  ON  sessions.date = sites.1pk_id,
-	  AND sessions.site_id = dates.1pk_id
+	  ON  sessions.date = sites.pk1_id,
+	  AND sessions.site_id = dates.pk1_id
 	</code>
 	<code class="good block">
 	SELECT
 		COALESCE(
-		  historical.2pk_site_id,
-		  incremental.2pk_site_id
-		) as 2pk_site_id,
+		  historical.pk2_site_id,
+		  incremental.pk2_site_id
+		) as pk2_site_id,
 		COALESCE(
-		  historical.2pk_date,
-		  incremental.2pk_date
-		) as 2pk_date
+		  historical.pk2_date,
+		  incremental.pk2_date
+		) as pk2_date
 		---
 		COALESCE(
 		  incremental.count
@@ -469,8 +470,8 @@
 		) as count
 	FROM historical
 	FULL OUTER JOIN incremental
-	  ON  incremental.2pk_site_id = historical.2pk_site_id,
-	  AND incremental.2pk_date = historical.2pk_date
+	  ON  incremental.pk2_site_id = historical.pk2_site_id,
+	  AND incremental.pk2_date = historical.pk2_date
 	</code>
 	</details>
 <details id="t7"> <!-- PK continues with window -->
@@ -480,18 +481,18 @@
 	Make sure not to use a <code>RANK</code>-like window function instead of <code>ROW_NUMBER</code>. The former yields duplicate ranks when two rows match. (For example, "Monday, Monday, Tuesday" would have ranks of 1,1,3)</p>
 	<code class="good block">
 	SELECT
-		user_id as 2pk_user_id,
+		user_id as pk2_user_id,
 		ROW_NUMBER() OVER (
 			PARTITION BY user_id
 			ORDER BY id ASC
-		) as 2pk_order_sequence_number,
+		) as pk2_order_sequence_number,
 		---
 		id as order_id
 	GROUP BY 1,2
 	</code>
 	<code class="bad block">
 	SELECT
-		ROW_NUMBER() as 1pk_id,
+		ROW_NUMBER() as pk1_id,
 		---
 		*
 	FROM (
@@ -507,7 +508,7 @@
 	<code class="good block">
 	view: user_lifetime {derived_table: {sql:
 		SELECT
-			user_id as 1pk_user_id
+			user_id as pk1_user_id
 			---
 			COUNT(*) as lifetime_orders,
 			SUM(amount) as lifetime_spend
@@ -522,7 +523,7 @@
 	<code class="good block">
 	view: new_orders {derived_table:{sql:
 	SELECT
-		1pk_order_id
+		pk1_order_id
 	FROM orders
 	WHERE order_date > (SELECT MAX(order_date) FROM order_rollup)
 					 -- ^ This single-column subquery is exempt
@@ -531,7 +532,7 @@
 	<code class="good block">
 	view: pending_users {derived_table:{sql:
 	SELECT
-		1pk_user_id
+		pk1_user_id
 	FROM users
 	WHERE id IN (SELECT user_id FROM orders WHERE status='Pending')
 	           -- ^ This single-column subquery is exempt
@@ -558,7 +559,7 @@
 	<code class="block good">
 		-- If division by zero throws for your syntax
 		SELECT
-			user_guid as 1pk_user_guid,
+			user_guid as pk1_user_guid,
 			---
 			COUNT(*) as events,
 			MIN(account_id)
@@ -571,7 +572,7 @@
 	<code class="block good">
 		--BigQuery - More convenient syntax
 		SELECT
-			user_guid as 1pk_user_guid,
+			user_guid as pk1_user_guid,
 			---
 			COUNT(*) as events,
 			CASE WHEN MIN(account_id) &lt;> MAX(account_id)
@@ -595,7 +596,7 @@
 		SELECT *
 		FROM (
 			SELECT
-			user_id as 1pk_user_id,
+			user_id as pk1_user_id,
 			---
 			ROW_NUMBER() OVER (
 				PARTITION BY user_id
@@ -610,7 +611,7 @@
 	<code class="good block">
 	derived_table: user_first_order {derived_table: {sql:
 		SELECT
-			user_id as 1pk_user_id,
+			user_id as pk1_user_id,
 			---
 			MIN(id) as order_id
 		FROM orders
@@ -637,7 +638,7 @@
 	<code class="good block">
 	join: users {
 	  relationship: many_to_one
-	  sql_on: ${1pk_user_id} = ${orders.user_id} ;;
+	  sql_on: ${pk1_user_id} = ${orders.user_id} ;;
 	}
 	</code>
 
@@ -652,7 +653,7 @@
 	<code class="questionable block">
 	join: dates {
 	  relationship: many_to_many
-	  sql_on: ${dates.1pk_date} >= $[users.created_date} AND ${dates.1pk_date} <= $[users.deleted_date} ;;
+	  sql_on: ${dates.pk1_date} >= $[users.created_date} AND ${dates.pk1_date} <= $[users.deleted_date} ;;
 	}
 	</code>
 
@@ -663,8 +664,8 @@
 	explore: order_items {
 		join: orders {
 			relationship: many_to_one
-			sql_on: ${orders.1pk_id} = ${order_items.order_id}
-				AND ${orders.dpk_user_id} = ${order_items.dpk_user_id}
+			sql_on: ${orders.pk1_id} = ${order_items.order_id}
+				AND ${orders.pkd_user_id} = ${order_items.pkd_user_id}
 			;; # Results in a hash join with no network activity
 		}
 	}
@@ -673,17 +674,17 @@
 	explore: entities {
 		join: eav_attribute1 {
 			relationship: one_to_one
-			sql_on: ${eav_attribute1.2pk_entity_id} = ${entities.id}
-				AND ${eav_attribute1.2pk_attribute_id} = 1
-				AND ${eav_attribute1.dpk_entity_id} = ${order_items.dpk_entity_id}
+			sql_on: ${eav_attribute1.pk2_entity_id} = ${entities.id}
+				AND ${eav_attribute1.pk2_attribute_id} = 1
+				AND ${eav_attribute1.pkd_entity_id} = ${order_items.pkd_entity_id}
 				AND ${eav_attribute1.idx_entity_id} = ${order_items.idx_entity_id}
 			;; # Results in a merge join with no network activity
 		}
 		join: eav_attribute2 {
 			relationship: one_to_one
-			sql_on: ${eav_attribute2.2pk_entity_id} = ${entities.id}
-				AND ${eav_attribute2.2pk_attribute_id} = 2
-				AND ${eav_attribute2.dpk_entity_id} = ${order_items.dpk_entity_id}
+			sql_on: ${eav_attribute2.pk2_entity_id} = ${entities.id}
+				AND ${eav_attribute2.pk2_attribute_id} = 2
+				AND ${eav_attribute2.pk2_entity_id} = ${order_items.pkd_entity_id}
 				AND ${eav_attribute2.idx_entity_id} = ${order_items.idx_entity_id}
 			;; # Results in a merge join with no network activity
 		}
@@ -709,11 +710,11 @@
 	explore: users {
 		join: orders {
 			relationship: one_to_many
-			sql_on: ${orders.user_id} = ${users.1pk_id} ;;
+			sql_on: ${orders.user_id} = ${users.pk1_id} ;;
 		}
 		join: favorites {
 			relationship: one_to_many
-			sql_on: ${favorites.user_id} = ${users.1pk_id} ;;
+			sql_on: ${favorites.user_id} = ${users.pk1_id} ;;
 		}
 	}
 	</code>
@@ -730,12 +731,12 @@
 		}
 		join: orders {
 			sql_on: ${user_join_paths.path} = 'orders'
-				AND ${orders.user_id} = ${users.1pk_id} ;;
+				AND ${orders.user_id} = ${users.pk1_id} ;;
 			relationship: one_to_one # Actually one_to_many, but avoiding symmetric aggregates
 		}
 		join: favorites {
 			sql_on: ${user_join_paths.path} = 'favorites'
-				AND ${favorites.user_id} = ${users.1pk_id} ;;
+				AND ${favorites.user_id} = ${users.pk_id} ;;
 			relationship: one_to_one # Actually one_to_many, but avoiding symmetric aggregates
 		}
 	}
@@ -774,4 +775,10 @@
 <details id="glossary-dist-key"><summary>Distribution key</summary> In Redshift, Vertica, MemSQL, MS PDW and possibly some others, data can be distributed according to a particular value. For simplicity, I use the name distribution key, though different dialects may have different names for this.</details>
 <details id="glossary-sort-key"><summary>Sort key</summary> Sort keys in Redshift, or partition columns in Big Query, clustered indexes in MS SQL Server or PDW, etc.</details>
 <details><summary>View</summary> I'm exclusively talking about LookML Views. Database views are not covered here</details>
+<h1 id="changelog">Changelog</h1>
+<details><summary>v2.0 (2018-10)</summary>
+	<ul>
+	<li>The naming convention in rules K2, K5, and T3 was changed from <code>{n}pk_...</code> to <code>pk{n}_...</code></li>
+	</ul>
+	<details>
 </body></html>
