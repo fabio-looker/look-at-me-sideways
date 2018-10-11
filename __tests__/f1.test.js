@@ -1,7 +1,7 @@
 require('../lib/expect-to-contain-message');
 
 const rule = require('../rules/f1');
-const {parse} = require('../../node-lookml-parser');
+const {parse} = require('lookml-parser');
 
 
 describe('Rules', () => {

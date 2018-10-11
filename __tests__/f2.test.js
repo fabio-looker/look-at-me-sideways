@@ -1,7 +1,7 @@
 require('../lib/expect-to-contain-message');
 
 const rule = require('../rules/f2');
-const {parse} = require('../../node-lookml-parser');
+const {parse} = require('lookml-parser');
 
 //const peek = (fn = x=>x) => (o) => {console.log(fn(o));return o}
 
