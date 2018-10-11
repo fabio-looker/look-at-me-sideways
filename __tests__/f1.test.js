@@ -11,6 +11,12 @@ describe('Rules', () => {
 			exempt: false,
 			level: 'error',
 		};
+		
+		it('should not error if there are no files',() => {
+			let result = rule(parse(``));
+			expect(result).not.toContainMessage(failMessageF1);
+		});
+		
 		it('should not error if there are no views',() => {
 			let result = rule(parse(`file: f {}`));
 			expect(result).not.toContainMessage(failMessageF1);
@@ -67,6 +73,26 @@ describe('Rules', () => {
 				view: foo {
 					extends: [bar]
 					dimension: baz { sql: \${abc.xyz} ;; }
+				}
+			}`));
+			expect(result).toContainMessage(failMessageF1);
+		});
+		
+		it('should error for a view with cross-view references in measures', () => {
+			let result = rule(parse(`file: f {
+				view: foo {
+					sql_table_name: foo ;;
+					measure: bar { sql: \${baz.bat} ;; }
+				}
+			}`));
+			expect(result).toContainMessage(failMessageF1);
+		});
+		
+		it('should error for a view with cross-view references in filters', () => {
+			let result = rule(parse(`file: f {
+				view: foo {
+					sql_table_name: foo ;;
+					filter: bar { sql: \${baz.bat} ;; }
 				}
 			}`));
 			expect(result).toContainMessage(failMessageF1);

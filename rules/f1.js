@@ -4,13 +4,17 @@ module.exports = function(
 	let messages = [];
 	let rule = 'F1';
 	let ok = true
-	for (let file of project.files) {
+	let files = project.files || []
+	for (let file of files) {
 		let views = file.views || [];
 		for (let view of views) {
 			if(!view.sql_table_name && !view.derived_table && !view.extends){
 				continue
 				}
-			let fields = [].concat(view.dimensions||[]).concat(view.measures||[]);
+			let fields = []
+				.concat(view.dimensions||[])
+				.concat(view.measures||[])
+				.concat(view.filters||[]);
 			for(let field of fields){
 				let location = `view:${view._view}/field:${field._dimension||field._measure}`;
 				let path = `/projects/${project.name}/files/${file._file_path}#${location}`;
