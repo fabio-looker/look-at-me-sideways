@@ -1,9 +1,7 @@
 module.exports = function(
 	project
-	// outputs from other rules?
 ) {
 	let messages = [];
-	const views = project.files.map((m)=>m.views).filter(Boolean).reduce(flatten, []);
 	const pkNamingConvention = (d)=>d._dimension.match(/^([0-9]+pk|pk[0-9]+)_([a-z0-9A-Z_]+)$/);
 	for (let file of project.files) {
 		let views = file.views || [];
