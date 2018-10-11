@@ -16,7 +16,7 @@ module.exports = function(
 					for(let rule of ['K1','K2','K3','K4']){
 						messages.push({
 							location, path, rule, level: 'info',
-							description: 'Field-only view ${view._view} is exempt from Primary Key Dimension rules'
+							description: `Field-only view ${view._view} is exempt from Primary Key Dimension rules`
 						})
 					}
 					continue;
@@ -44,7 +44,7 @@ module.exports = function(
 				if (declaredNs.length>1) {
 					messages.push({
 						location, path, rule, exempt, level: 'error',
-						description: 'Different Primary Key Dimensions in '+view._view+' declare different column counts: '+declaredNs.join(', '),
+						description: `Different Primary Key Dimensions in ${view._view} declare different column counts: ${declaredNs.join(', ')}`,
 					});
 					continue;
 				}
@@ -86,6 +86,10 @@ module.exports = function(
 				}
 			}
 			for (let pkDimension of pkDimensions) {
+				//Return PK info for PK index in developer.md
+				if(pkDimensions.map(pkNamingConvention).map((match)=>match[1].replace('pk', ''))[0]==='0'){
+					continue;
+				}
 				messages.push({
 					location, path, level: 'info',
 					primaryKey: pkNamingConvention(pkDimension)[2],

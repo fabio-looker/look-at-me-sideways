@@ -1,7 +1,10 @@
 {{! let viewIndex = ctx.messages
 		.filter(msg=>msg.primaryKey!==undefined)
 		.reduce(ctx.fns.groupBy({
-			grouping:["primaryKey"]
+			grouping:["primaryKey"],
+			summaries:{
+				count: (total,msg) => (total||0)+1
+				}
 			}),null);
 	}}---
 title: Developer Index
@@ -12,10 +15,10 @@ navigation: true
 {{?}}
 
 {{! function renderRecursive(group,{lvl=0,rootName}){var out="";}}
-	<details style="margin-left: {{=2*lvl}}em" open>
+	<details style="margin-left: {{=2*lvl}}em" {{? lvl==0}}open{{?}}>
 		<summary style="margin-left:-2em;border-bottom:solid 1px #333;">
 			<div style="display:inline-flex;width:90%;justify-content:space-between">
-			<b>{{&ctx.fns.format(rootName||group.key)}}</b>
+			<b>{{&ctx.fns.format(rootName||group.key)}} {{?lvl>0}}({{=group.summaries.count}}){{?}}</b>
 			</div>
 		</summary>
 		{{?group.data}}
