@@ -49,7 +49,8 @@ const templates = {
 		console.log('> Parsing done!');
 
 		console.log('Checking rules... ');
-		let rules = ['k1-2-3-4','f1','f2','f3']; // TODO: This should be dynamic from the folder
+		// TODO: This should be dynamic from the folder
+		let rules = ['k1-2-3-4','f1','f2','f3','f4'];
 		let messages = [];
 		for (let r of rules) {
 			console.log('> '+r.toUpperCase());
