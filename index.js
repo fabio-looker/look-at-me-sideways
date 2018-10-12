@@ -16,7 +16,7 @@ dot.templateSettings = {
 	interpolate: /\{\{=([\s\S]+?)\}\}/g,
 	encode: /\{\{&([\s\S]+?)\}\}/g,
 	conditional: /\{\{\?(\?)?\s*([\s\S]*?)\s*\}\}/g,
-	iterate: /\{\{\*\s*(?:\}\}|([\s\S]+?)\s*\:\s*([\w$]+)\s*(?:\:\s*([\w$]+))?\s*\}\})/g,
+	iterate: /\{\{\*\s*(?:\}\}|([\s\S]+?)\s*:\s*([\w$]+)\s*(?::\s*([\w$]+))?\s*\}\})/g,
 	varname: 'ctx',
 	strip: false,
 };
@@ -50,7 +50,7 @@ const templates = {
 
 		console.log('Checking rules... ');
 		// TODO: This should be dynamic from the folder
-		let rules = ['k1-2-3-4','f1','f2','f3','f4'];
+		let rules = ['k1-2-3-4', 'f1', 'f2', 'f3', 'f4'];
 		let messages = [];
 		for (let r of rules) {
 			console.log('> '+r.toUpperCase());

@@ -11,25 +11,25 @@ describe('Rules', () => {
 			exempt: false,
 			level: 'error',
 		};
-		
-		it('should not error if there are no files',() => {
+
+		it('should not error if there are no files', () => {
 			let result = rule(parse(``));
 			expect(result).not.toContainMessage(failMessageF1);
 		});
-		
-		it('should not error if there are no views',() => {
+
+		it('should not error if there are no views', () => {
 			let result = rule(parse(`file: f {}`));
 			expect(result).not.toContainMessage(failMessageF1);
 		});
-		
-		it('should not error for a view with no fields',() => {
+
+		it('should not error for a view with no fields', () => {
 			let result = rule(parse(`file: f {
 				view: foo { sql_table_name: foo ;; }
 			}`));
 			expect(result).not.toContainMessage(failMessageF1);
 		});
-		
-		it('should not error for a view with no table (a.k.a. field-only view)',() => {
+
+		it('should not error for a view with no table (a.k.a. field-only view)', () => {
 			let result = rule(parse(`file: f {
 				view: foo_bar { 
 					dimension: combine { sql: \${foo.amount} + \${bar.amount} ;; } 
@@ -37,7 +37,7 @@ describe('Rules', () => {
 			}`));
 			expect(result).not.toContainMessage(failMessageF1);
 		});
-		
+
 		it('should not error for a field with no references', () => {
 			let result = rule(parse(`file: f {
 				view: foo {
@@ -47,7 +47,7 @@ describe('Rules', () => {
 			}`));
 			expect(result).not.toContainMessage(failMessageF1);
 		});
-		
+
 		it('should error for a base-table view with a cross-view reference', () => {
 			let result = rule(parse(`file: f {
 				view: foo {
@@ -57,7 +57,7 @@ describe('Rules', () => {
 			}`));
 			expect(result).toContainMessage(failMessageF1);
 		});
-		
+
 		it('should error for a derived-table view with a cross-view reference', () => {
 			let result = rule(parse(`file: f {
 				view: foo {
@@ -67,7 +67,7 @@ describe('Rules', () => {
 			}`));
 			expect(result).toContainMessage(failMessageF1);
 		});
-		
+
 		it('should error for an extended view with a cross-view reference', () => {
 			let result = rule(parse(`file: f {
 				view: foo {
@@ -77,7 +77,7 @@ describe('Rules', () => {
 			}`));
 			expect(result).toContainMessage(failMessageF1);
 		});
-		
+
 		it('should error for a view with cross-view references in measures', () => {
 			let result = rule(parse(`file: f {
 				view: foo {
@@ -87,7 +87,7 @@ describe('Rules', () => {
 			}`));
 			expect(result).toContainMessage(failMessageF1);
 		});
-		
+
 		it('should error for a view with cross-view references in filters', () => {
 			let result = rule(parse(`file: f {
 				view: foo {
@@ -97,7 +97,7 @@ describe('Rules', () => {
 			}`));
 			expect(result).toContainMessage(failMessageF1);
 		});
-		
+
 		it('should not error for an F1 exempted view', () => {
 			let result = rule(parse(`file: f {
 				view: foo {
@@ -108,7 +108,7 @@ describe('Rules', () => {
 			}`));
 			expect(result).not.toContainMessage(failMessageF1);
 		});
-		
+
 		it('should error for an otherwise exempted view', () => {
 			let result = rule(parse(`file: f {
 				view: foo {
@@ -119,7 +119,7 @@ describe('Rules', () => {
 			}`));
 			expect(result).toContainMessage(failMessageF1);
 		});
-		
+
 		it('should not error for an F1 exempted field', () => {
 			let result = rule(parse(`file: f {
 				view: foo {
@@ -132,7 +132,7 @@ describe('Rules', () => {
 			}`));
 			expect(result).not.toContainMessage(failMessageF1);
 		});
-		
+
 		it('should error for an otherwise exempted field', () => {
 			let result = rule(parse(`file: f {
 				view: foo {
@@ -145,7 +145,7 @@ describe('Rules', () => {
 			}`));
 			expect(result).toContainMessage(failMessageF1);
 		});
-		
+
 		it('should error for a field with a non-special-case 2-part reference in sql {{}}', () => {
 			let result = rule(parse(`file: f {
 				view: foo {
@@ -155,7 +155,7 @@ describe('Rules', () => {
 			}`));
 			expect(result).toContainMessage(failMessageF1);
 		});
-		
+
 		it('should error for a field with a non-special-case 2-part reference in sql {% %}', () => {
 			let result = rule(parse(`file: f {
 				view: foo {
@@ -165,7 +165,7 @@ describe('Rules', () => {
 			}`));
 			expect(result).toContainMessage(failMessageF1);
 		});
-		
+
 		it('should error for a field with a non-special-case 2-part reference in html ${}', () => {
 			let result = rule(parse(`file: f {
 				view: foo {
@@ -175,7 +175,7 @@ describe('Rules', () => {
 			}`));
 			expect(result).toContainMessage(failMessageF1);
 		});
-		
+
 		it('should error for a field with a non-special-case 2-part reference in html {{}}', () => {
 			let result = rule(parse(`file: f {
 				view: foo {
@@ -185,7 +185,7 @@ describe('Rules', () => {
 			}`));
 			expect(result).toContainMessage(failMessageF1);
 		});
-		
+
 		it('should error for a field with a non-special-case 2-part reference in html {% %}', () => {
 			let result = rule(parse(`file: f {
 				view: foo {
@@ -195,7 +195,7 @@ describe('Rules', () => {
 			}`));
 			expect(result).toContainMessage(failMessageF1);
 		});
-		
+
 		it('should not error for a field with a TABLE reference', () => {
 			let result = rule(parse(`file: f {
 				view: foo {
@@ -205,7 +205,7 @@ describe('Rules', () => {
 			}`));
 			expect(result).not.toContainMessage(failMessageF1);
 		});
-		
+
 		it('should not error for references to its own default alias', () => {
 			let result = rule(parse(`file: f {
 				view: foo {
@@ -216,7 +216,7 @@ describe('Rules', () => {
 			}`));
 			expect(result).not.toContainMessage(failMessageF1);
 		});
-		
+
 		it('should not error for 2-part ._sql references', () => {
 			let result = rule(parse(`file: f {
 				view: foo {
@@ -227,7 +227,7 @@ describe('Rules', () => {
 			}`));
 			expect(result).not.toContainMessage(failMessageF1);
 		});
-		
+
 		it('should not error for 2-part ._value references', () => {
 			let result = rule(parse(`file: f {
 				view: foo {
@@ -238,7 +238,7 @@ describe('Rules', () => {
 			}`));
 			expect(result).not.toContainMessage(failMessageF1);
 		});
-		
+
 		it('should not error for 2-part ._name references', () => {
 			let result = rule(parse(`file: f {
 				view: foo {
@@ -249,7 +249,7 @@ describe('Rules', () => {
 			}`));
 			expect(result).not.toContainMessage(failMessageF1);
 		});
-		
+
 		it('should not error for 2-part ._parameter_value references', () => {
 			let result = rule(parse(`file: f {
 				view: foo {
@@ -260,7 +260,7 @@ describe('Rules', () => {
 			}`));
 			expect(result).not.toContainMessage(failMessageF1);
 		});
-		
+
 		it('should error for 2-part ._in_query references', () => {
 			let result = rule(parse(`file: f {
 				view: foo {
@@ -270,7 +270,7 @@ describe('Rules', () => {
 			}`));
 			expect(result).toContainMessage(failMessageF1);
 		});
-		
+
 		it('should error for 3-part cross-view special-suffix references', () => {
 			let result = rule(parse(`file: f {
 				view: foo {
@@ -280,7 +280,7 @@ describe('Rules', () => {
 			}`));
 			expect(result).toContainMessage(failMessageF1);
 		});
-		
+
 		it('should not error for 3-part same-view special-suffix references', () => {
 			let result = rule(parse(`file: f {
 				view: foo {

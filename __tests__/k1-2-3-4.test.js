@@ -37,7 +37,7 @@ describe('Rules', () => {
 			files: [{
 				'view': [{}],
 				'views': [{
-					'sql_table_name':'tbl',
+					'sql_table_name': 'tbl',
 					'dimensions': [{
 						primary_key: true,
 						hidden: true,

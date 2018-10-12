@@ -1,29 +1,32 @@
+const isExempt = require('../lib/is-exempt.js');
+
 module.exports = function(
 	project
 ) {
 	let messages = [];
 	const pkNamingConvention = (d)=>d._dimension.match(/^([0-9]+pk|pk[0-9]+)_([a-z0-9A-Z_]+)$/);
-	let files = project.files || []
+	const unique = (x, i, arr) => arr.indexOf(x)===i;
+	let files = project.files || [];
 	for (let file of files) {
 		let views = file.views || [];
 		for (let view of views) {
 			let location = 'view: '+view._view;
 			let path = '/projects/'+project.name+'/files/'+file._file_path+'#view:'+view._view;
 			let pkDimensions = (view.dimensions||[]).filter(pkNamingConvention);
-			{ /* Field-only view exemption */
-				if(!view.derived_table && !view.sql_table_name && !view.extends){
-					for(let rule of ['K1','K2','K3','K4']){
+			{/* Field-only view exemption */
+				if (!view.derived_table && !view.sql_table_name && !view.extends) {
+					for (let rule of ['K1', 'K2', 'K3', 'K4']) {
 						messages.push({
 							location, path, rule, level: 'info',
-							description: `Field-only view ${view._view} is exempt from Primary Key Dimension rules`
-						})
+							description: `Field-only view ${view._view} is exempt from Primary Key Dimension rules`,
+						});
 					}
 					continue;
 				}
 			}
-			{ /* Rule K1 */
+			{/* Rule K1 */
 				let rule = 'K1';
-				let exempt = isExempt(file, rule) || isExempt(view, rule);	
+				let exempt = isExempt(file, rule) || isExempt(view, rule);
 				if (!pkDimensions.length) {
 					messages.push({
 						location, path, rule, exempt, level: 'error',
@@ -36,7 +39,7 @@ module.exports = function(
 					description: '1 or more Primary Key Dimensions found in '+view._view,
 				});
 			}
-			{ /* Rule K2 */
+			{/* Rule K2 */
 				let declaredNs = pkDimensions.map(pkNamingConvention).map((match)=>match[1].replace('pk', '')).filter(unique);
 				let rule = 'K2';
 				let exempt = isExempt(file, rule) || isExempt(view, rule);
@@ -47,7 +50,7 @@ module.exports = function(
 					});
 					continue;
 				}
-				let n = parseInt(declaredNs[0])
+				let n = parseInt(declaredNs[0]);
 				if (n != pkDimensions.length && n !== 0 ) {
 					messages.push({
 						location, path, rule, exempt, level: 'error',
@@ -60,7 +63,7 @@ module.exports = function(
 					description: `Primary Key Dimensions found in ${view._view} are appropriately numbered`,
 				});
 			}
-			{ /* Rule K3 */
+			{/* Rule K3 */
 				let rule = 'K3';
 				let exempt = isExempt(file, rule) || isExempt(view, rule);
 				if (pkDimensions.reduce(((min, x)=>x._n<min?x._n:min), 99) !== 0 ||
@@ -71,7 +74,7 @@ module.exports = function(
 					});
 				}
 			}
-			{ /* Rule K4 */
+			{/* Rule K4 */
 				let dims = pkDimensions.filter((dim)=>!dim.hidden);
 				let rule = 'K4';
 				let exempt = isExempt(file, rule) || isExempt(view, rule) || dims.every((d)=>isExempt(d, rule));
@@ -85,8 +88,8 @@ module.exports = function(
 				}
 			}
 			for (let pkDimension of pkDimensions) {
-				//Return PK info for PK index in developer.md
-				if(pkDimensions.map(pkNamingConvention).map((match)=>match[1].replace('pk', ''))[0]==='0'){
+				// Return PK info for PK index in developer.md
+				if (pkDimensions.map(pkNamingConvention).map((match)=>match[1].replace('pk', ''))[0]==='0') {
 					continue;
 				}
 				messages.push({
@@ -101,14 +104,4 @@ module.exports = function(
 	return {
 		messages,
 	};
-
-	function flatten(a, b) {
-		return a.concat(b);
-	}
-	function unique(x, i, arr) {
-		return arr.indexOf(x)==i;
-	}
-	function isExempt(obj, rule) {
-		return !!(obj.rule_exemptions && obj.rule_exemptions.includes && obj.rule_exemptions.includes(rule));
-	}
 };
