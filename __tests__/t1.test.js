@@ -1,0 +1,68 @@
+require('../lib/expect-to-contain-message');
+
+const rule = require('../rules/t1.js');
+const {parse} = require('lookml-parser');
+
+describe('Rules', () => {
+	describe('T1', () => {
+		let failMessageT1 = {
+			rule: 'T1',
+			exempt: false,
+			level: 'error',
+		};
+
+		let passMessageT1 = {
+			rule: 'T1',
+			level: 'info',
+		};
+
+		it('should pass if datagroup_trigger is used', () => {
+			let result = rule(parse(`file: f {
+				view: foo {
+					derived_table: {
+						sql: SELECT * 
+						FROM table ;;
+						datagroup_trigger: my_datagroup
+					}
+				}
+			}`));
+			expect(result).toContainMessage(passMessageT1);
+		});
+
+		it('should not error on DTs', () => {
+			let result = rule(parse(`file: f {
+				view: foo {
+					derived_table: {
+						sql: SELECT * 
+						FROM table ;;
+					}
+				}
+			}`));
+			expect(result).toContainMessage(passMessageT1);
+		});
+
+		it('should error if any other trigger is found (persist_for|sql_trigger_value)', () => {
+			let result = rule(parse(`file: f {
+				view: foo {
+					derived_table: {
+						sql: SELECT * 
+						FROM table ;;
+						persist_for: "24 hours"
+					}
+				}
+			}`));
+			expect(result).toContainMessage(failMessageT1);
+
+			result = rule(parse(`file: f {
+				view: foo {
+					derived_table: {
+						sql: SELECT * 
+						FROM table ;;
+						sql_trigger_value: SELECT CURDATE() ;;
+					}
+				}
+			}`));
+			expect(result).toContainMessage(failMessageT1);
+		});
+	});
+});
