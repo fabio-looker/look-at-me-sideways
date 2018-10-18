@@ -16,13 +16,24 @@ describe('Rules', () => {
 			level: 'info',
 		};
 
-		it('should pass if datagroup_trigger is used', () => {
+		it('should pass if datagroup_trigger or persist_for is used', () => {
 			let result = rule(parse(`file: f {
 				view: foo {
 					derived_table: {
 						sql: SELECT * 
 						FROM table ;;
 						datagroup_trigger: my_datagroup
+					}
+				}
+			}`));
+			expect(result).toContainMessage(passMessageT1);
+
+			result = rule(parse(`file: f {
+				view: foo {
+					derived_table: {
+						sql: SELECT * 
+						FROM table ;;
+						persist_for: "24 hours"
 					}
 				}
 			}`));
@@ -41,19 +52,8 @@ describe('Rules', () => {
 			expect(result).toContainMessage(passMessageT1);
 		});
 
-		it('should error if any other trigger is found (persist_for|sql_trigger_value)', () => {
+		it('should error if sql_trigger_value is used', () => {
 			let result = rule(parse(`file: f {
-				view: foo {
-					derived_table: {
-						sql: SELECT * 
-						FROM table ;;
-						persist_for: "24 hours"
-					}
-				}
-			}`));
-			expect(result).toContainMessage(failMessageT1);
-
-			result = rule(parse(`file: f {
 				view: foo {
 					derived_table: {
 						sql: SELECT * 

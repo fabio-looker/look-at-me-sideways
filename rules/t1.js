@@ -17,12 +17,12 @@ module.exports = function(
 			if (!view.derived_table) {
 				continue;
 			}
-			if (!(view.derived_table.hasOwnProperty('datagroup_trigger'))
-				&& (view.derived_table.hasOwnProperty('sql_trigger_value') || view.derived_table.hasOwnProperty('persist_for'))) {
+			if (!(view.derived_table.hasOwnProperty('datagroup_trigger') || view.derived_table.hasOwnProperty('persist_for'))
+				&& view.derived_table.hasOwnProperty('sql_trigger_value')) {
 				ok = false;
 				messages.push({
 					location, path, rule, exempt, level: 'error',
-					description: `Triggered PDTs should use datagroups`,
+					description: `Triggered PDTs should use datagroups or persist_for.`,
 				});
 			}
 		}
