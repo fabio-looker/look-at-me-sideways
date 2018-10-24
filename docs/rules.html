@@ -632,8 +632,29 @@
 	</details>
 <h1 id="explores">Explores</h1>
 
+<details id="e0">
+	<summary><b>E0.</b> All join fields should be referenced using the substitution operator, <code>${view_name.field_name}</code></summary>
+	<p> there are cases</p>
+	<code class="good block">
+	explore: orders {
+		join: users {
+			relationship: many_to_one
+			sql_on: ${users.1pk_id} = ${orders.user_id} ;;
+		}
+	}
+	</code>
+	<code class="bad block">
+	explore: orders {
+		join: users {
+			relationship: many_to_one
+			sql_on: users.id = orders.user_id ;;
+		}
+	}
+	</code>
+	<p><b>Note:</b> Sometimes you may want to make joins dynamic using <code>_in_query</code>. This requires you to reference fields to join on IF the view is <code>_in_query</code> but NOT use the substitution operator since that forces the view to be in the query.</p>
+</details>
 <details id="e1"> <!-- Primary keys used -->
-	<summary><b>E1</b> The "one" table in any join should be joined on equality constraints on all of the Primary Key Dimensions</summary>
+	<summary><b>E1.</b> The "one" table in any join should be joined on equality constraints on all of the Primary Key Dimensions</summary>
 	<p> This is relevant for any 1:1, 1:m, m:1, 1:0or1 joins. In otherwords, any non-many-to-many join (which you should only be using with great caution)</p>
 	<code class="good block">
 	join: users {
