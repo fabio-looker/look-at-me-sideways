@@ -632,9 +632,8 @@
 	</details>
 <h1 id="explores">Explores</h1>
 
-<details id="e0">
-	<summary><b>E0.</b> All join fields should be referenced using the substitution operator, <code>${view_name.field_name}</code></summary>
-	<p> there are cases</p>
+<details id="e1">
+	<summary><b>E1.</b> All join fields should be referenced using the substitution operator, <code>${view_name.field_name}</code></summary>
 	<code class="good block">
 	explore: orders {
 		join: users {
@@ -653,8 +652,8 @@
 	</code>
 	<p><b>Note:</b> Sometimes you may want to make joins dynamic using <code>_in_query</code>. This requires you to reference fields to join on IF the view is <code>_in_query</code> but NOT use the substitution operator since that forces the view to be in the query.</p>
 </details>
-<details id="e1"> <!-- Primary keys used -->
-	<summary><b>E1.</b> The "one" table in any join should be joined on equality constraints on all of the Primary Key Dimensions</summary>
+<details id="e2"> <!-- Primary keys used -->
+	<summary><b>E2.</b> The "one" table in any join should be joined on equality constraints on all of the Primary Key Dimensions</summary>
 	<p> This is relevant for any 1:1, 1:m, m:1, 1:0or1 joins. In otherwords, any non-many-to-many join (which you should only be using with great caution)</p>
 	<code class="good block">
 	join: users {
@@ -679,8 +678,8 @@
 	</code>
 
 	</details>
-<details id="e2"> <!-- Join on dist key and sort keys when possible -->
-	<summary><b>E2.</b> Joins should use <a class="subtle" href="#glossary-dist-key">distribution keys</a> and <a class="subtle" href="#glossary-sort-key">sort keys</a> when possible</summary>
+<details id="e3"> <!-- Join on dist key and sort keys when possible -->
+	<summary><b>E3.</b> Joins should use <a class="subtle" href="#glossary-dist-key">distribution keys</a> and <a class="subtle" href="#glossary-sort-key">sort keys</a> when possible</summary>
 	<code class="good block">
 	explore: order_items {
 		join: orders {
@@ -713,8 +712,8 @@
 	</code>
 	<p><b>Note:</b> In the EAV example, even though the first part of the primary key, the distribution key, and the sort key all result in `entity_id`, writing them out multiple times with the different key dimensions communicates what they do to anyone reading the join, and should have negligible performance impact.</p>
 	</details>
-<details id="e3"> <!-- always_filter on sortkey -->
-	<summary><b>E3.</b> Explores should declare `always_filter` on the base table's sort key / parition column / clustered index</summary>
+<details id="e4"> <!-- always_filter on sortkey -->
+	<summary><b>E4.</b> Explores should declare `always_filter` on the base table's sort key / parition column / clustered index</summary>
 	<p>For small tables, this won't matter much, but for big tables it will make a big difference, so it's good to be in the habit.<p>
 	<code class="good block">
 	explore: events {
@@ -725,8 +724,8 @@
 	</code>
 	<p><b>Note:</b> This is all that's needed if the filtered table is the base of an explore with only left or inner joins. Otherwise, you can push the filter down into the sql_table_name (or derived table) using <code>{% condition view.always_filtered_field %} table.column {% endcondition %}</code></p>
 	</details>
-<details id="e4"> <!-- avoid multiplicative fanout -->
-	<summary><b>E4.</b> Explores' joins must not cause multiplicative fanout or spurious relationships</summary>
+<details id="e5"> <!-- avoid multiplicative fanout -->
+	<summary><b>E5.</b> Explores' joins must not cause multiplicative fanout or spurious relationships</summary>
 	<code class="bad block">
 	explore: users {
 		join: orders {
