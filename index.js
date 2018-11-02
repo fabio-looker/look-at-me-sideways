@@ -1,39 +1,58 @@
 #! /usr/bin/env node
-const cliArgs = require('minimist')(process.argv.slice(
-	process.argv[0]=='lams'
-		? 1 // e.g. lams --bla
-		: 2 // e.g. node index.js --bla
-));
-const fs = require('fs');
-const path = require('path');
-const parser = require('lookml-parser');
-const dot = require('dot');
-const templateFunctions = require('./lib/template-functions.js');
-
-dot.templateSettings = {
-	...dot.templateSettings,
-	evaluate: /\{\{!([\s\S]+?)\}\}/g,
-	interpolate: /\{\{=([\s\S]+?)\}\}/g,
-	encode: /\{\{&([\s\S]+?)\}\}/g,
-	conditional: /\{\{\?(\?)?\s*([\s\S]*?)\s*\}\}/g,
-	iterate: /\{\{\*\s*(?:\}\}|([\s\S]+?)\s*:\s*([\w$]+)\s*(?::\s*([\w$]+))?\s*\}\})/g,
-	varname: 'ctx',
-	strip: false,
-};
-dot.process({path: path.join(__dirname, 'templates')});
-const templates = {
-	developer: require('./templates/developer'),
-	issues: require('./templates/issues'),
-};
-
 !async function() {
+	let messages = [], lamsErrors = [], tracker = {};
 	try {
+		const cliArgs = require('minimist')(process.argv.slice(
+			process.argv[0]=='lams'
+				? 1 // e.g. lams --bla
+				: 2 // e.g. node index.js --bla
+		));
+		const fs = require('fs');
+		const path = require('path');
+		const os = require('os');
+		const prefs = (()=>{
+			try{return JSON.parse(fs.readFileSync(
+				path.resolve(os.homedir(),'.look-at-me-sideways/prefs.json')
+			));}
+			catch(e){return {};}
+		})();
+		const tracker = require('./lib/tracking')({
+			prefs:cliArgs.reporting?cliArgs:prefs,
+			gaPropertyId:''
+		});
+		if(!tracker.valid){
+			console.log(fs.readFileSync(path.resolve(__dirname, 'PRIVACY.md'),'utf-8').replace(/\n/g,"\n  "));
+			process.exit(1);
+		}
+		if(tracker.save){
+			console.warn("TODO: prefs.save")
+		}
+		const parser = require('lookml-parser');
+		const dot = require('dot');
+		const templateFunctions = require('./lib/template-functions.js');
+
+		dot.templateSettings = {
+			...dot.templateSettings,
+			evaluate: /\{\{!([\s\S]+?)\}\}/g,
+			interpolate: /\{\{=([\s\S]+?)\}\}/g,
+			encode: /\{\{&([\s\S]+?)\}\}/g,
+			conditional: /\{\{\?(\?)?\s*([\s\S]*?)\s*\}\}/g,
+			iterate: /\{\{\*\s*(?:\}\}|([\s\S]+?)\s*:\s*([\w$]+)\s*(?::\s*([\w$]+))?\s*\}\})/g,
+			varname: 'ctx',
+			strip: false,
+		};
+		dot.process({path: path.join(__dirname, 'templates')});
+		const templates = {
+			developer: require('./templates/developer'),
+			issues: require('./templates/issues'),
+		};
 		console.log('Parsing project...');
 		const project = await parser.parseFiles({
 			source: cliArgs.input || cliArgs.i,
 			console,
 		});
 		if (project.errors) {
+			lamsErrors = lamsErrors.concat(project.errors)
 			console.warn('> Issues occurred during parsing (containing files will not be considered):');
 			project.errorReport();
 		}
@@ -51,7 +70,6 @@ const templates = {
 		console.log('Checking rules... ');
 		// TODO: This should be dynamic from the folder
 		let rules = ['k1-2-3-4', 'f1', 'f2', 'f3', 'f4'];
-		let messages = [];
 		for (let r of rules) {
 			console.log('> '+r.toUpperCase());
 			let rule = require('./rules/'+r+'.js');
@@ -83,14 +101,25 @@ const templates = {
 
 		const buildStatus = errors.length ? 'FAILED' : 'PASSED';
 		console.log(`BUILD ${buildStatus}: ${errors.length} errors and ${warnings.length} warnings found. Check .md files for details.`);
-
+		if(tracker.enabled){
+			tracker.track({messages,errors:lamsErrors})
+		}
 		if (errors.length) {
 			process.exit(1);
 		} else {
 			process.exit(0);
 		}
 	} catch (e) {
-		console.error(e);
+		try {
+			console.error(e);
+			if(!tracker.valid){throw "Unknown error";}
+			if(tracker.enabled){tracker.track({messages,errors:lamsErrors.concat(e)});}
+			else{console.warn(`Error reporting is disabled. Run with --reporting=yes to report, or see PRIVACY.md for more info`);}
+		}
+		catch(e){
+			console.error(e);
+			console.error(`Error reporting is not available	. Please submit an issue to https://github.com/fabio-looker/look-at-me-sideways/issues`);
+		}
 		process.exit(1);
 	}
 }();

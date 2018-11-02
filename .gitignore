@@ -1,5 +1,6 @@
 node_modules
 templates/*.js
-*.md
+developer.md
+issues.md
 *.lkml
 .DS_Store
