@@ -9,24 +9,10 @@
 		));
 		const fs = require('fs');
 		const path = require('path');
-		const os = require('os');
-		const prefs = (()=>{
-			try{return JSON.parse(fs.readFileSync(
-				path.resolve(os.homedir(),'.look-at-me-sideways/prefs.json')
-			));}
-			catch(e){return {};}
-		})();
 		const tracker = require('./lib/tracking')({
-			prefs:cliArgs.reporting?cliArgs:prefs,
-			gaPropertyId:''
+			cliArgs,
+			gaPropertyId:'UA-96247573-2'
 		});
-		if(!tracker.valid){
-			console.log(fs.readFileSync(path.resolve(__dirname, 'PRIVACY.md'),'utf-8').replace(/\n/g,"\n  "));
-			process.exit(1);
-		}
-		if(tracker.save){
-			console.warn("TODO: prefs.save")
-		}
 		const parser = require('lookml-parser');
 		const dot = require('dot');
 		const templateFunctions = require('./lib/template-functions.js');
