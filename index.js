@@ -1,6 +1,6 @@
 #! /usr/bin/env node
 !async function() {
-	let messages = [], lamsErrors = [], tracker = {};
+	let messages = []; let lamsErrors = []; let tracker = {};
 	try {
 		const cliArgs = require('minimist')(process.argv.slice(
 			process.argv[0]=='lams'
@@ -11,7 +11,7 @@
 		const path = require('path');
 		const tracker = require('./lib/tracking')({
 			cliArgs,
-			gaPropertyId:'UA-96247573-2'
+			gaPropertyId: 'UA-96247573-2',
 		});
 		const parser = require('lookml-parser');
 		const dot = require('dot');
@@ -38,7 +38,7 @@
 			console,
 		});
 		if (project.errors) {
-			lamsErrors = lamsErrors.concat(project.errors)
+			lamsErrors = lamsErrors.concat(project.errors);
 			console.warn('> Issues occurred during parsing (containing files will not be considered):');
 			project.errorReport();
 		}
@@ -87,8 +87,8 @@
 
 		const buildStatus = errors.length ? 'FAILED' : 'PASSED';
 		console.log(`BUILD ${buildStatus}: ${errors.length} errors and ${warnings.length} warnings found. Check .md files for details.`);
-		if(tracker.enabled){
-			tracker.track({messages,errors:lamsErrors})
+		if (tracker.enabled) {
+			tracker.track({messages, errors: lamsErrors});
 		}
 		if (errors.length) {
 			process.exit(1);
@@ -98,11 +98,15 @@
 	} catch (e) {
 		try {
 			console.error(e);
-			if(!tracker.valid){throw "Unknown error";}
-			if(tracker.enabled){tracker.track({messages,errors:lamsErrors.concat(e)});}
-			else{console.warn(`Error reporting is disabled. Run with --reporting=yes to report, or see PRIVACY.md for more info`);}
-		}
-		catch(e){
+			if (!tracker.valid) {
+				throw new Error('Unknown error');
+			}
+			if (tracker.enabled) {
+				tracker.track({messages, errors: lamsErrors.concat(e)});
+			} else {
+				console.warn(`Error reporting is disabled. Run with --reporting=yes to report, or see PRIVACY.md for more info`);
+			}
+		} catch (e) {
 			console.error(e);
 			console.error(`Error reporting is not available	. Please submit an issue to https://github.com/fabio-looker/look-at-me-sideways/issues`);
 		}

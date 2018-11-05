@@ -2,7 +2,8 @@ module.exports = {
     "env": {
         "browser": true,
         "node": true,
-        "jest/globals": true
+        "jest/globals": true,
+        "es6": true,
     },
     "parserOptions": {
         "ecmaVersion": 6,
