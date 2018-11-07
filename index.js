@@ -102,6 +102,7 @@
 				throw new Error('Unknown error');
 			}
 			if (tracker.enabled) {
+				e.isFatalError = true;
 				tracker.track({messages, errors: lamsErrors.concat(e)});
 			} else {
 				console.warn(`Error reporting is disabled. Run with --reporting=yes to report, or see PRIVACY.md for more info`);
