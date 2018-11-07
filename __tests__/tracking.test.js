@@ -1,10 +1,9 @@
 const tracking = require('../lib/tracking');
 require('../lib/expect-to-contain-message');
 
-// 1. test command line arguments valid, enabled and saved that comes out of it
 describe('CLI', () => {
 	it('should error if an invalid argument is passed and for privacy policy to be printed', () => {
-		const process = {exit: ()=>{}}
+		const process = {exit: ()=>{}};
 		const exit = jest.spyOn(process, 'exit');
 		const console = {log: () => {}};
 		const log = jest.spyOn(console, 'log');
@@ -26,13 +25,12 @@ describe('CLI', () => {
 			cliArgs: {reporting: 'no'},
 		});
 
-		expect(tracker).toContainMessage({
+		expect(tracker).toMatchObject({
 			enabled: false,
 		});
 	});
 
 	it('should return a callable request function if tracking is enabled', () => {
-
 		const https = {request: () => {}};
 		const request = jest.spyOn(https, 'request');
 
@@ -41,15 +39,54 @@ describe('CLI', () => {
 			https,
 		});
 
-		expect(tracker).toContainMessage({
+		expect(tracker).toMatchObject({
 			valid: true,
 			enabled: true,
 		});
-		tracker.track(/* what do we want to test with? */);
+		tracker.track({});
 		expect(request).toHaveBeenCalled();
+	});
+
+	it('should send a payload', () => {
+		let write;
+		const https = {request: ()=>{
+			let req = {
+				write: (body)=>{},
+				end: () => {},
+			};
+			write = jest.spyOn(req, 'write');
+			return req;
+		}};
+		const tracker = tracking({
+			cliArgs: {'reporting': 'yes', 'report-user': 'foo@test.com'},
+			gaPropertyId: 'test',
+			https,
+		});
+
+		let errors = [];
+		let messages = [{
+			rule: 'foo',
+			exempt: false,
+			level: 'error',
+		}, {
+			rule: 'foo',
+			exempt: false,
+			level: 'error',
+		}, {
+			rule: 'baz',
+			level: 'info' 
+		}, {
+			rule: 'bat',
+			exempt: true,
+			level: 'warning',
+		}]
+		;
+		tracker.track({messages, errors});
+		expect(write).toHaveBeenCalledWith(`v=1&av=0.0.0&tid=test&cid=834b0d78-07e7-4800-8493-db52fd650814&t=event&cd1=834b0d7807e798000493db52fd650814e534a8f742a1c5a58cbb7b42879696e0&cd2=&ec=Run&ea=End
+			v=1&av=0.0.0&tid=test&cid=834b0d78-07e7-4800-8493-db52fd650814&t=event&ec=Rule%20Result&ea=error&ev=2&cd3=foo&cd4=false&ni=1
+			v=1&av=0.0.0&tid=test&cid=834b0d78-07e7-4800-8493-db52fd650814&t=event&ec=Rule%20Result&ea=info&ev=1&cd3=baz&cd4=false&ni=1
+			v=1&av=0.0.0&tid=test&cid=834b0d78-07e7-4800-8493-db52fd650814&t=event&ec=Rule%20Result&ea=warning&ev=1&cd3=bat&cd4=false&ni=1`.replace(/\t+/g, ''));
 	});
 });
 
 // 2. test fs preferences saved preferences by passing that fs mock
-
-// 3. test http calls
