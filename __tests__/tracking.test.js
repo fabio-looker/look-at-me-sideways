@@ -2,9 +2,9 @@ const tracking = require('../lib/tracking');
 require('../lib/expect-to-contain-message');
 
 describe('CLI', () => {
-	const mocks = ({fs={},spies={}}={}) => ({
+	const mocks = ({fs={}, spies={}}={}) => ({
 		process: {
-			exit: jest.fn(()=>{})
+			exit: jest.fn(()=>{}),
 		},
 		console: {
 			log: jest.fn(()=>{}),
@@ -15,11 +15,11 @@ describe('CLI', () => {
 			homedir: ()=>'~',
 		},
 		fs: {
-			writeFileSync: (path,contents) => (fs[path]=contents,true),
+			writeFileSync: (path, contents) => (fs[path]=contents, true),
 			readFileSync: (path) => fs[path],
 		},
-		https:{
-			request:()=>{
+		https: {
+			request: ()=>{
 				let req = {
 					write: (body)=>{},
 					end: () => {},
@@ -30,13 +30,13 @@ describe('CLI', () => {
 		},
 		spies,
 	});
-		
+
 	const realFs = require('fs');
 	const path = require('path');
 	const privacyPolicyPath = path.resolve(__dirname, '../PRIVACY.md');
 	const privacyPolicy = realFs.readFileSync(privacyPolicyPath, 'utf-8');
 	const initFs = {
-		[privacyPolicyPath]:privacyPolicy,
+		[privacyPolicyPath]: privacyPolicy,
 	};
 
 	it('should print PP and exit if an invalid reporting argument is passed', () => {
@@ -50,7 +50,7 @@ describe('CLI', () => {
 		expect(process.exit).toHaveBeenCalledWith(1);
 	});
 	it('should print PP and exit if no reporting argument is passed and no settings exist', () => {
-		let {console,process, fs} = mocks({fs:initFs});
+		let {console, process, fs} = mocks({fs: initFs});
 		tracking({
 			cliArgs: {},
 			process,
@@ -61,7 +61,7 @@ describe('CLI', () => {
 		expect(process.exit).toHaveBeenCalledWith(1);
 	});
 	it('should return an object with enabled false if reporting argument is no', () => {
-		let {console, process, fs} = mocks({fs:initFs});
+		let {console, process, fs} = mocks({fs: initFs});
 		const tracker = tracking({
 			cliArgs: {reporting: 'no'},
 			console,
@@ -71,7 +71,7 @@ describe('CLI', () => {
 		expect(tracker).toMatchObject({enabled: false});
 	});
 	it('should return an object with enabled false if reporting argument is save-no', () => {
-		let {console, process, fs} = mocks({fs:initFs});
+		let {console, process, fs} = mocks({fs: initFs});
 		const tracker = tracking({
 			cliArgs: {reporting: 'save-no'},
 			console,
@@ -81,14 +81,14 @@ describe('CLI', () => {
 		expect(tracker).toMatchObject({enabled: false});
 	});
 	it('should return an object with enabled false if reporting argument was previously save-no', () => {
-		let {console, process, fs} = mocks({fs:initFs});
+		let {console, process, fs} = mocks({fs: initFs});
 		tracking({
 			cliArgs: {reporting: 'save-no'},
 			console,
 			process,
 			fs,
 		});
-		({console,process} = mocks());
+		({console, process} = mocks());
 		const tracker = tracking({
 			cliArgs: {},
 			process,
@@ -98,7 +98,7 @@ describe('CLI', () => {
 		expect(tracker).toMatchObject({enabled: false});
 	});
 	it('should return a callable request function if reporting argument is yes', () => {
-		let {console, process, fs, https, spies} = mocks({fs:initFs});
+		let {console, process, fs, https, spies} = mocks({fs: initFs});
 		const tracker = tracking({
 			cliArgs: {reporting: 'yes'},
 			console,
@@ -114,7 +114,7 @@ describe('CLI', () => {
 		expect(spies.httpsRequestWrite).toHaveBeenCalled();
 	});
 	it('should return a callable request function if reporting argument is save-yes', () => {
-		let {console, process, fs, https, spies} = mocks({fs:initFs});
+		let {console, process, fs, https, spies} = mocks({fs: initFs});
 		const tracker = tracking({
 			cliArgs: {reporting: 'save-yes'},
 			console,
@@ -130,7 +130,7 @@ describe('CLI', () => {
 		expect(spies.httpsRequestWrite).toHaveBeenCalled();
 	});
 	it('should return a callable request function if reporting argument was previously save-yes', () => {
-		let {console, process, fs} = mocks({fs:initFs});
+		let {console, process, fs, https, spies} = mocks({fs: initFs});
 		tracking({
 			cliArgs: {reporting: 'save-yes'},
 			console,
@@ -152,19 +152,19 @@ describe('CLI', () => {
 		tracker.track({});
 		expect(spies.httpsRequestWrite).toHaveBeenCalled();
 	});
-	
+
 	it('should warn, print PP and exit if no reporting argument is passed and PP has changed since reporting preferences were saved', () => {
 		let {console, process, fs} = mocks({fs: initFs});
 		tracking({
-			cliArgs: {reporting:"save-yes"},
+			cliArgs: {reporting: 'save-yes'},
 			process,
 			console,
 			fs,
 		});
 		expect(console.warn).not.toHaveBeenCalled();
 		expect(process.exit).not.toHaveBeenCalled();
-		fs.writeFileSync(privacyPolicyPath,'Bla bla bla');
-		({console,process} = mocks());
+		fs.writeFileSync(privacyPolicyPath, 'Bla bla bla');
+		({console, process} = mocks());
 		tracking({
 			cliArgs: {},
 			process,
@@ -177,7 +177,7 @@ describe('CLI', () => {
 	});
 
 	it('should send a payload', () => {
-		let {console, process, fs, https, spies} = mocks({fs:initFs});
+		let {console, process, fs, https, spies} = mocks({fs: initFs});
 		const tracker = tracking({
 			cliArgs: {'reporting': 'yes', 'report-user': 'foo@test.com'},
 			gaPropertyId: 'test',
