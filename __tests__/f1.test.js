@@ -102,11 +102,22 @@ describe('Rules', () => {
 			let result = rule(parse(`file: f {
 				view: foo {
 					extends: [bar]
-					rule_exemptions: [F1]
+					rule_exemptions: {F1:"It is okay, this is extended."}
 					dimension: baz { sql: \${abc.xyz} ;; }
 				}
 			}`));
 			expect(result).not.toContainMessage(failMessageF1);
+		});
+
+		it('should error for an F1 exempted view if no reason is specified', () => {
+			let result = rule(parse(`file: f {
+				view: foo {
+					extends: [bar]
+					rule_exemptions: {F1:""}
+					dimension: baz { sql: \${abc.xyz} ;; }
+				}
+			}`));
+			expect(result).toContainMessage(failMessageF1);
 		});
 
 		it('should error for an otherwise exempted view', () => {
@@ -126,7 +137,7 @@ describe('Rules', () => {
 					extends: [bar]
 					dimension: baz { 
 						sql: \${abc.xyz} ;; 
-						rule_exemptions: [F1]
+						rule_exemptions: {F1: "It is okay, this is extended"}
 					}
 				}
 			}`));

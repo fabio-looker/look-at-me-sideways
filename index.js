@@ -54,8 +54,7 @@
 		console.log('> Parsing done!');
 
 		console.log('Checking rules... ');
-		// TODO: This should be dynamic from the folder
-		let rules = ['k1-2-3-4', 'f1', 'f2', 'f3', 'f4'];
+		let rules = fs.readdirSync(path.join(__dirname, 'rules')).map((fileName) => fileName.match(/^(.*)\.js$/)).filter(Boolean).map((match) => match[1]);
 		for (let r of rules) {
 			console.log('> '+r.toUpperCase());
 			let rule = require('./rules/'+r+'.js');
@@ -88,7 +87,7 @@
 		const buildStatus = errors.length ? 'FAILED' : 'PASSED';
 		console.log(`BUILD ${buildStatus}: ${errors.length} errors and ${warnings.length} warnings found. Check .md files for details.`);
 		if (tracker.enabled) {
-			tracker.track({messages, errors: lamsErrors});
+			await tracker.track({messages, errors: lamsErrors});
 		}
 		if (errors.length) {
 			process.exit(1);

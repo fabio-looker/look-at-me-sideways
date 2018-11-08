@@ -76,7 +76,7 @@ describe('Rules', () => {
 		it('should not error for an F3 exempted view', () => {
 			let result = rule(parse(`file: f {
 				view: foo {
-					rule_exemptions: [F3]
+					rule_exemptions: {F3: "Filters on measures? No way, I like incorrect counts every now and then"}
 					measure: bar { type:count }
 				}
 			}`));
@@ -87,7 +87,7 @@ describe('Rules', () => {
 			let result = rule(parse(`file: f {
 				view: foo {
 					measure: bar {
-						rule_exemptions: [F3]
+						rule_exemptions: {F3: "Filters on measures? No way, I like incorrect counts every now and then"}
 						type: count
 					}
 				}
@@ -95,10 +95,22 @@ describe('Rules', () => {
 			expect(result).not.toContainMessage(failMessageF3);
 		});
 
+		it('should error for an F3 exempted field if no reason is specified', () => {
+			let result = rule(parse(`file: f {
+				view: foo {
+					measure: bar {
+						rule_exemptions: {F3: ""}
+						type: count
+					}
+				}
+			}`));
+			expect(result).toContainMessage(failMessageF3);
+		});
+
 		it('should error for an otherwise exempted view', () => {
 			let result = rule(parse(`file: f {
 				view: foo {
-					rule_exemptions: [X1]
+					rule_exemptions: {X1: "foo"}
 					measure: bar { type: count }
 				}
 			}`));
@@ -109,7 +121,7 @@ describe('Rules', () => {
 			let result = rule(parse(`file: f {
 				view: foo {
 					measure: bar {
-						rule_exemptions: [X1]
+						rule_exemptions: {X1: "foo"}
 						type: count
 					}
 				}
