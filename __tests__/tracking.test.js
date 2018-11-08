@@ -81,10 +81,10 @@ describe('CLI', () => {
 			level: 'warning',
 		}];
 		tracker.track({messages, errors});
-		expect(write).toHaveBeenCalledWith(`v=1&av=0.0.0&tid=test&cid=834b0d78-07e7-4800-8493-db52fd650814&t=event&cd1=834b0d7807e798000493db52fd650814e534a8f742a1c5a58cbb7b42879696e0&cd2=&ec=Run&ea=End
-			v=1&av=0.0.0&tid=test&cid=834b0d78-07e7-4800-8493-db52fd650814&t=event&ec=Rule%20Result&ea=error&ev=2&cd3=foo&cd4=false&ni=1
-			v=1&av=0.0.0&tid=test&cid=834b0d78-07e7-4800-8493-db52fd650814&t=event&ec=Rule%20Result&ea=info&ev=1&cd3=baz&cd4=false&ni=1
-			v=1&av=0.0.0&tid=test&cid=834b0d78-07e7-4800-8493-db52fd650814&t=event&ec=Rule%20Result&ea=warning&ev=1&cd3=bat&cd4=false&ni=1`.replace(/\t+/g, ''));
+		expect(write).toHaveBeenCalledWith(`v=1&an=LAMS&av=0.0.0&tid=test&cid=834b0d78-07e7-4800-8493-db52fd650814&t=event&cd1=834b0d7807e798000493db52fd650814e534a8f742a1c5a58cbb7b42879696e0&cd2=&ec=Run&ea=End
+			v=1&an=LAMS&av=0.0.0&tid=test&cid=834b0d78-07e7-4800-8493-db52fd650814&t=event&ec=Rule%20Result&ea=error&ev=2&cd3=foo&cd4=false&ni=1
+			v=1&an=LAMS&av=0.0.0&tid=test&cid=834b0d78-07e7-4800-8493-db52fd650814&t=event&ec=Rule%20Result&ea=info&ev=1&cd3=baz&cd4=false&ni=1
+			v=1&an=LAMS&av=0.0.0&tid=test&cid=834b0d78-07e7-4800-8493-db52fd650814&t=event&ec=Rule%20Result&ea=warning&ev=1&cd3=bat&cd4=false&ni=1`.replace(/\t+/g, ''));
 	});
 
 	// TODO: test the arguments with which fs.writeFileSync is called.
