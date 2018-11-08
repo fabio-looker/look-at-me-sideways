@@ -105,7 +105,7 @@ describe('Rules', () => {
 		it('should not error for an F4 exempted view', () => {
 			let result = rule(parse(`file: f {
 				view: foo {
-					rule_exemptions: [F4]
+					rule_exemptions: {F4: "Descriptions are for explorers. Who cares."}
 					measure: bar { type:count }
 				}
 			}`));
@@ -116,7 +116,7 @@ describe('Rules', () => {
 			let result = rule(parse(`file: f {
 				view: foo {
 					measure: bar {
-						rule_exemptions: [F4]
+						rule_exemptions: {F4: "Descriptions are for explorers. Who cares."}
 						type: count
 					}
 				}
@@ -124,10 +124,20 @@ describe('Rules', () => {
 			expect(result).not.toContainMessage(warnMessageF4);
 		});
 
+		it('should error for an F4 exempted view if no reason is specified', () => {
+			let result = rule(parse(`file: f {
+				view: foo {
+					rule_exemptions: {F4: ""}
+					measure: bar { type:count }
+				}
+			}`));
+			expect(result).toContainMessage(warnMessageF4);
+		});
+
 		it('should error for an otherwise exempted view', () => {
 			let result = rule(parse(`file: f {
 				view: foo {
-					rule_exemptions: [X1]
+					rule_exemptions: {X: "foo"}
 					measure: bar { type: count }
 				}
 			}`));
@@ -138,7 +148,7 @@ describe('Rules', () => {
 			let result = rule(parse(`file: f {
 				view: foo {
 					measure: bar {
-						rule_exemptions: [X1]
+						rule_exemptions: {X: "foo"}
 						type: count
 					}
 				}

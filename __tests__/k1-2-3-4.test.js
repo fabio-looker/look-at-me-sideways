@@ -102,8 +102,8 @@ describe('Rules', () => {
 		it('should not error if no pk is found and file is exempt from rule', () => {
 			project.files[0].views[0].dimensions[0]._dimension = 'foobar';
 			project.files[0].views[0].dimensions[1]._dimension = 'foobaz';
-			project.files[0]['rule_exemptions'] = ['K1'];
-			failMessageK1.exempt = true;
+			project.files[0]['rule_exemptions'] = {K1: 'Who cares about primary keys.'};
+			failMessageK1.exempt = expect.any(String);
 			expect(rules(project)).toContainObject(failMessageK1);
 		});
 		it('should not error if there is no sql_table_name', () => {

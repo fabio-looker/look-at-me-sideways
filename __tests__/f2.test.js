@@ -87,7 +87,7 @@ describe('Rules', () => {
 		it('should not warn for an F2 exempted view', () => {
 			let result = rule(parse(`file: f {
 				view: foo {
-					rule_exemptions: [F2]
+					rule_exemptions: {F2: "foo"}
 					dimension: bar { view_label: "Foo2" }
 				}
 			}`));
@@ -98,7 +98,7 @@ describe('Rules', () => {
 			let result = rule(parse(`file: f {
 				view: foo {
 					dimension: bar {
-						rule_exemptions: [F2]
+						rule_exemptions: {F2: "foo"}
 						view_label: "Foo2"
 					}
 				}
@@ -106,10 +106,22 @@ describe('Rules', () => {
 			expect(result).not.toContainMessage(warnMessageF2);
 		});
 
+		it('should warn for an F2 exempted field if no reason is specified', () => {
+			let result = rule(parse(`file: f {
+				view: foo {
+					dimension: bar {
+						rule_exemptions: {F2: ""}
+						view_label: "Foo2"
+					}
+				}
+			}`));
+			expect(result).toContainMessage(warnMessageF2);
+		});
+
 		it('should warn for an otherwise exempted view', () => {
 			let result = rule(parse(`file: f {
 				view: foo {
-					rule_exemptions: [X1]
+					rule_exemptions: {X1: "bar"}
 					dimension: bar { view_label: "Foo2" }
 				}
 			}`));
@@ -120,7 +132,7 @@ describe('Rules', () => {
 			let result = rule(parse(`file: f {
 				view: foo {
 					dimension: bar {
-						rule_exemptions: [X1]
+						rule_exemptions: {X1: "bar"}
 						view_label: "Foo2"
 					}
 				}
