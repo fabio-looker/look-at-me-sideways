@@ -1,4 +1,4 @@
-const isExempt = require('../lib/is-exempt.js');
+const getExemption = require('../lib/get-exemption.js');
 
 module.exports = function(
 	project,
@@ -14,7 +14,7 @@ module.exports = function(
 			for (let field of fields) {
 				let location = `view:${view._view}/field:${field._dimension||field._measure}`;
 				let path = `/projects/${project.name}/files/${file._file_path}#${location}`;
-				let exempt = isExempt(file, rule) || isExempt(view, rule) || isExempt(field, rule);
+				let exempt = getExemption(field, rule) || getExemption(view, rule) || getExemption(file, rule);
 				if ( field.type === 'count' && field.filter === undefined) {
 					ok = false;
 					messages.push({

@@ -1,4 +1,4 @@
-const isExempt = require('../lib/is-exempt.js');
+const getExemption = require('../lib/get-exemption.js');
 
 module.exports = function(
 	project
@@ -26,7 +26,7 @@ module.exports = function(
 			}
 			{/* Rule K1 */
 				let rule = 'K1';
-				let exempt = isExempt(file, rule) || isExempt(view, rule);
+				let exempt = getExemption(view, rule) || getExemption(file, rule);
 				if (!pkDimensions.length) {
 					messages.push({
 						location, path, rule, exempt, level: 'error',
@@ -42,7 +42,7 @@ module.exports = function(
 			{/* Rule K2 */
 				let declaredNs = pkDimensions.map(pkNamingConvention).map((match)=>match[1].replace('pk', '')).filter(unique);
 				let rule = 'K2';
-				let exempt = isExempt(file, rule) || isExempt(view, rule);
+				let exempt = getExemption(view, rule) || getExemption(file, rule);
 				if (declaredNs.length>1) {
 					messages.push({
 						location, path, rule, exempt, level: 'error',
@@ -65,7 +65,7 @@ module.exports = function(
 			}
 			{/* Rule K3 */
 				let rule = 'K3';
-				let exempt = isExempt(file, rule) || isExempt(view, rule);
+				let exempt = getExemption(view, rule) || getExemption(file, rule);
 				if (pkDimensions.reduce(((min, x)=>x._n<min?x._n:min), 99) !== 0 ||
 					pkDimensions.reduce(((max, x)=>x._n>max?x._n:max), 0) !== pkDimensions.length-1 ) {
 					messages.push({
@@ -77,7 +77,7 @@ module.exports = function(
 			{/* Rule K4 */
 				let dims = pkDimensions.filter((dim)=>!dim.hidden);
 				let rule = 'K4';
-				let exempt = isExempt(file, rule) || isExempt(view, rule) || dims.every((d)=>isExempt(d, rule));
+				let exempt = dims.every((d)=>getExemption(d, rule)) || getExemption(view, rule) || getExemption(file, rule);
 				let dimNames = dims.map((dim)=>dim._dimension).join(', ');
 				if (pkDimensions.some((dim)=>!dim.hidden)) {
 					messages.push({

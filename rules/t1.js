@@ -1,4 +1,4 @@
-const isExempt = require('../lib/is-exempt');
+const getExemption = require('../lib/get-exemption');
 
 module.exports = function(
 	project,
@@ -13,7 +13,7 @@ module.exports = function(
 		for (let view of views) {
 			let location = 'view: ' + view._view;
 			let path = '/projects/'+project.name+'/files/'+file._file_path+'#view:'+view._view;
-			let exempt = isExempt(file, rule) || isExempt(view, rule);
+			let exempt = getExemption(view, rule) || getExemption(file, rule);
 			if (!view.derived_table) {
 				continue;
 			}
