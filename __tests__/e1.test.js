@@ -1,6 +1,6 @@
 require('../lib/expect-to-contain-message');
 
-const rule = require('../rules/e0.js');
+const rule = require('../rules/e1.js');
 const {parse} = require('lookml-parser');
 
 describe('Rules', () => {
