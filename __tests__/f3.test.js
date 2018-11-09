@@ -44,7 +44,7 @@ describe('Rules', () => {
 				view: foo {
 					measure: bar { 
 						type: count
-						filter: {
+						filters: {
 							field: id
 							value: "-null"
 						}
@@ -59,11 +59,11 @@ describe('Rules', () => {
 				view: foo {
 					measure: bar { 
 						type: count
-						filter: {
+						filters: {
 							field: id
 							value: "-null"
 						}
-						filter: {
+						filters: {
 							field: baz
 							value: "active"
 						}
