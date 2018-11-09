@@ -18,7 +18,7 @@ module.exports = function(
 					for (let rule of ['K1', 'K2', 'K3', 'K4']) {
 						messages.push({
 							location, path, rule, level: 'info',
-							description: `Field-only view ${view._view} is exempt from Primary Key Dimension rules`,
+							description: `Field-only view ${view._view} is not subject to Primary Key Dimension rules`,
 						});
 					}
 					continue;
@@ -27,6 +27,7 @@ module.exports = function(
 			{/* Rule K1 */
 				let rule = 'K1';
 				let exempt = getExemption(view, rule) || getExemption(file, rule);
+				console.log(view._view, exempt);
 				if (!pkDimensions.length) {
 					messages.push({
 						location, path, rule, exempt, level: 'error',

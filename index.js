@@ -35,6 +35,7 @@
 		console.log('Parsing project...');
 		const project = await parser.parseFiles({
 			source: cliArgs.input || cliArgs.i,
+			conditionalCommentString: 'LAMS',
 			console,
 		});
 		if (project.errors) {
