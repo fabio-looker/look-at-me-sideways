@@ -6,28 +6,30 @@ module.exports = function(
 	let messages = [];
 	let rule = 'E1';
 	let ok = true;
-	for (let model of project.models) {
-		for (let explore of model.explores) {
-			// TODO: Confirm location/path for explores/joins
-			let location = `model:${model._model}/explore:${explore._explore}`;
+	let models = project.models || [];
+	for (let model of models) {
+		let explores = model.explores || [];
+		for (let explore of explores) {
 			let path = `/projects/${project.name}/files/${model._model}.model.lkml`;
-			for (let join of explore.joins) {
+			let join = explore.joins || [];
+			for (let join of joins) {
+				let location = `model:${model._model}/explore:${explore._explore}/join:${join._join}`;
 				let exempt = getExemption(join, rule) || getExemption(explore, rule) || getExemption(model, rule);
-				// TODO: robustify the below regex to identify liquid in sql_on
-				if (/({\s*{)|({\s*%)/.test(join.sql_on)) {
-					continue;
-				} else {
-					let joinFields = (join.sql_on||'').split(/\s+and|=|>=|<=|<|>|or\s+/i).map((x) => x.trim());
-					// TODO: change below to be done in one stpe
-					let okFields = joinFields.filter((f) => f.match(/\s*\${(\w+.\w+)}\s*/));
-					let badFields = joinFields.filter((f) => !okFields.includes(f));
-					if (badFields.length) {
-						ok = false;
-						messages.push({
-							location, path, rule, exempt, level: 'warning',
-							description: `${badFields.join(', ')} should be referenced using the substitution operator`,
-						});
-					}
+				let sql = join.sql || join.sql_on
+				let sqlWithLkmlRemoved = sql.replace(/\${[\s\S]*?}|{{[\s\S]*?}}|{%\s*if[\s\S]*?endif\s*%}|{%[\s\S]*?%}/g,"" )
+				let references = (sqlWithLkmlRemoved.match(/[a-zA-Z0-9._]+\.[a-zA-Z0-9 ._]+/g)||[])				
+					.filter((ref) => !( //Two-part references to allow
+						ref.match(/^safe\./i) // BigQuery: https://cloud.google.com/bigquery/docs/reference/standard-sql/functions-and-operators#safe-prefix
+					))
+				if(references.length){
+					ok = false;
+					messages.push({
+						location, path, rule, exempt, level: 'warning',
+						description: 
+							references.slice(0,3).join(', ')
+							+ (references.length>3?"...":'')
+							+ ` should be referenced using the substitution operator`,
+					});
 				}
 			}
 		}
@@ -38,7 +40,6 @@ module.exports = function(
 			description: 'All join fields are referenced using the substitution operator',
 		});
 	}
-
 	return {
 		messages,
 	};

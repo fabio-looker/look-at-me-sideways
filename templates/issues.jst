@@ -10,7 +10,7 @@
 	let issues = subset.filter(msg=>!msg.exempt).reduce(grouping,null);
 	let exempt = subset.filter(msg=> msg.exempt).reduce(grouping,null);
 	}}---
-title: {{?issues.summaries.count}}Issues - {{=issues.summaries.errors||"0"}}⛔ {{=issues.summaries.warnings||"0"}}⚠️  {{??}}No Issues{{?}}
+title: {{?issues && issues.summaries.count}}Issues - {{=issues.summaries.errors||"0"}}⛔ {{=issues.summaries.warnings||"0"}}⚠️  {{??}}No Issues{{?}}
 navigation: true
 ---
 
