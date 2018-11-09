@@ -27,15 +27,13 @@ module.exports = function(
 			{/* Rule K1 */
 				let rule = 'K1';
 				let exempt = getExemption(view, rule) || getExemption(file, rule);
+				console.log(view._view, exempt);
 				if (!pkDimensions.length) {
 					messages.push({
 						location, path, rule, exempt, level: 'error',
 						description: 'No Primary Key Dimensions found in '+view._view,
 					});
 					continue;
-				}
-				if (view._view==='carrier_joinpaths') {
-					console.log(exempt);
 				}
 				messages.push({
 					location, path, rule, exempt, level: 'info',
