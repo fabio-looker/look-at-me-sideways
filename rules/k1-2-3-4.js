@@ -18,7 +18,7 @@ module.exports = function(
 					for (let rule of ['K1', 'K2', 'K3', 'K4']) {
 						messages.push({
 							location, path, rule, level: 'info',
-							description: `Field-only view ${view._view} is exempt from Primary Key Dimension rules`,
+							description: `Field-only view ${view._view} is not subject to Primary Key Dimension rules`,
 						});
 					}
 					continue;
@@ -33,6 +33,9 @@ module.exports = function(
 						description: 'No Primary Key Dimensions found in '+view._view,
 					});
 					continue;
+				}
+				if (view._view==='carrier_joinpaths') {
+					console.log(exempt);
 				}
 				messages.push({
 					location, path, rule, exempt, level: 'info',
