@@ -1,4 +1,4 @@
-const isExempt = require('../lib/is-exempt');
+const getExemption = require('../lib/get-exemption');
 
 module.exports = function(
 	project,
@@ -18,7 +18,7 @@ module.exports = function(
 			}
 			if (!(view.derived_table.hasOwnProperty('datagroup_trigger') || view.derived_table.hasOwnProperty('persist_for'))
 				&& view.derived_table.hasOwnProperty('sql_trigger_value')) {
-				let exempt = isExempt(file, rule) || isExempt(view, rule) || isExempt(view.derived_table, rule);
+				let exempt = getExemption(view.derived_table, rule) || getExemption(view, rule) || getExemption(file, rule);
 				ok = false;
 				messages.push({
 					location, path, rule, exempt, level: 'error',
