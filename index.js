@@ -1,6 +1,6 @@
 #! /usr/bin/env node
 !async function() {
-	let messages = []; let lamsErrors = []; let tracker = {};
+	let messages = []; let lamsMessages = []; let tracker = {};
 	try {
 		const cliArgs = require('minimist')(process.argv.slice(
 			process.argv[0]=='lams'
@@ -36,10 +36,15 @@
 		const project = await parser.parseFiles({
 			source: cliArgs.input || cliArgs.i,
 			conditionalCommentString: 'LAMS',
-			console,
+			console: {
+				warn: (msg) => lamsMessages.push({message: msg&&msg.message||msg, level: 'lams-warning'}), // LAMS warnings should not abort the deploy
+				error: (msg) => lamsMessages.push({message: msg&&msg.message||msg, level: 'lams-error'}), // LAMS errors should abort the deploy
+			},
 		});
 		if (project.errors) {
-			lamsErrors = lamsErrors.concat(project.errors);
+			lamsMessages = lamsMessages.concat(project.errors.map((e) =>
+				({message: e&&e.message||e, level: 'lams-error'})
+			));
 			console.warn('> Issues occurred during parsing (containing files will not be considered):');
 			project.errorReport();
 		}
@@ -84,11 +89,14 @@
 		let warnings = messages.filter((msg) => {
 			return msg.level==='warning' && !msg.exempt;
 		});
+		let lamsErrors = messages.filter((msg) => {
+			return msg.level==='lams-errors' && !msg.exempt;
+		});
 
-		const buildStatus = errors.length ? 'FAILED' : 'PASSED';
+		const buildStatus = (errors.length || warnings.length || lamsErrors.length) ? 'FAILED' : 'PASSED';
 		console.log(`BUILD ${buildStatus}: ${errors.length} errors and ${warnings.length} warnings found. Check .md files for details.`);
 		if (tracker.enabled) {
-			await tracker.track({messages, errors: lamsErrors});
+			await tracker.track({messages, errors: lamsMessages});
 		}
 		if (errors.length) {
 			process.exit(1);
@@ -103,7 +111,7 @@
 			}
 			if (tracker.enabled) {
 				e.isFatalError = true;
-				tracker.track({messages, errors: lamsErrors.concat(e)});
+				tracker.track({messages, errors: lamsMessages.concat(e)});
 			} else {
 				console.warn(`Error reporting is disabled. Run with --reporting=yes to report, or see PRIVACY.md for more info`);
 			}

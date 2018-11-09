@@ -9,11 +9,19 @@
 	let subset = ctx.messages.filter(msg=>(msg.level=="warning"||msg.level=="error"));
 	let issues = subset.filter(msg=>!msg.exempt).reduce(grouping,null);
 	let exempt = subset.filter(msg=> msg.exempt).reduce(grouping,null);
+	let lamsMessages = ctx.messages.filter(msg=>(msg.level=="lams-warning"||msg.level=="lams-error"));
 	}}---
 title: {{?issues && issues.summaries.count}}Issues - {{=issues.summaries.errors||"0"}}⛔ {{=issues.summaries.warnings||"0"}}⚠️  {{??}}No Issues{{?}}
 navigation: true
 ---
-
+{{?lamsMessages.length}}
+<b>LAMS Issues</b>
+<ul>
+	{{* lamsMessages :msg}} 
+	<li>{{?msg.level=='lams-warning'}}⚠️{{?}}{{?msg.level=='lams-error'}}⛔{{?}}{{=msg.message}}</li>
+	{{*}}
+</ul>
+{{?}}
 {{?issues}}
 {{= renderRecursive(issues,{rootName:"Issues"}) }}
 {{??}}
@@ -27,7 +35,7 @@ navigation: true
 {{?}}
 
 {{! function renderRecursive(group,{lvl=0,rootName}){var out="";}}
-	<details style="margin-left: {{=2*lvl}}em" {{?lvl<1}}open="open"{{?}}>
+	<details style="margin-left: {{=2*lvl}}em" open="open">
 		<summary style="margin-left:-2em;border-bottom:solid 1px #333;">
 			<b>{{&ctx.fns.format(rootName||group.key)}}</b>
 			(
