@@ -4,15 +4,15 @@ const rule = require('../rules/e1.js');
 const {parse} = require('lookml-parser');
 
 describe('Rules', () => {
-	describe('E0', () => {
-		let warnMessageE0 = {
-			rule: 'E0',
+	describe('E1', () => {
+		let warnMessageE1 = {
+			rule: 'E1',
 			exempt: false,
 			level: 'warning',
 		};
 
-		let passMessageE0 = {
-			rule: 'E0',
+		let passMessageE1 = {
+			rule: 'E1',
 			level: 'info',
 		};
 
@@ -28,7 +28,7 @@ describe('Rules', () => {
 					}
 				}
 			}`));
-			expect(result).toContainMessage(passMessageE0);
+			expect(result).toContainMessage(passMessageE1);
 		});
 
 		it('should not warn if liquid syntax is detected and the subsitution operator is not found', () => {
@@ -47,7 +47,7 @@ describe('Rules', () => {
 					}
 				}
 			}`));
-			expect(result).toContainMessage(passMessageE0);
+			expect(result).toContainMessage(passMessageE1);
 		});
 
 		it('should warn if not all join fields use the substitution operator', () => {
@@ -62,7 +62,7 @@ describe('Rules', () => {
 					}
 				}
 			}`));
-			expect(result).toContainMessage(warnMessageE0);
+			expect(result).toContainMessage(warnMessageE1);
 		});
 
 		it('should warn if no join fields use the substitution operator', () => {
@@ -77,7 +77,7 @@ describe('Rules', () => {
 					}
 				}
 			}`));
-			expect(result).toContainMessage(warnMessageE0);
+			expect(result).toContainMessage(warnMessageE1);
 		});
 
 		// TODO confirm exemption levels for E rules.
