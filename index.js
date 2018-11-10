@@ -52,10 +52,13 @@
 			throw (project.error);
 		}
 		project.name = false
-		// || check for a project manifest file?
-		|| cliArgs['project-name']
-		|| (''+process.cwd()).split(path.sep).filter(Boolean).slice(-1)[0]	// The current directory. May not actually be the project name...
-		|| 'unknown_project';
+			|| project.file && project.file.manifest && project.file.manifest.project_name
+			|| cliArgs['project-name']
+			|| (''+process.cwd()).split(path.sep).filter(Boolean).slice(-1)[0]	// The current directory. May not actually be the project name...
+			|| 'unknown_project';
+		if (project.name === 'look-at-me-sideways') {
+			lamsMessages.push({level: 'lams-warning', message: 'Consider adding a manifest.lkml file to your project to identify the project_name'});
+		}
 
 		console.log('> Parsing done!');
 
