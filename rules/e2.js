@@ -7,78 +7,103 @@ module.exports = function(
 	let rule = 'E2';
 	let ok = true;
 	let models = project.models || [];
-	const pkNamingConvention = (d)=>d._dimension.match(/^([0-9]+pk|pk[0-9]+)_([a-z0-9A-Z_]+)$/);
+	const pkRegex = /^([0-9]+pk|pk[0-9]+)_([a-z0-9A-Z_]+)$/;
+	const isFieldRef = (ref) => !ref.match(/^TABLE$|^SUPER$|^EXTENDED$|\.SQL_TABLE_NAME$/);
+	const unique = (x, i, arr) => arr.indexOf(x)===i;
+	const min = (a, b) => a<b?a:b;
+	const max = (a, b) => a>b?a:b;
+	const aliasFromRef = (ref) => ref.split('.')[0];
 	for (let model of models) {
 		let explores = model.explores || [];
 		for (let explore of explores) {
 			let path = `/projects/${project.name}/files/${model._model}.model.lkml`;
-			let join = explore.joins || [];
+			let joins = explore.joins || [];
 			for (let join of joins) {
 				let location = `model:${model._model}/explore:${explore._explore}/join:${join._join}`;
 				let exempt = getExemption(join, rule) || getExemption(explore, rule) || getExemption(model, rule);
-				let joinSql = join.sql || join.sql_on;
-				let allRefs = (joinSql.match(/(?<=\${).*?(?=})/g)||[])
+
+				let joinSql = join.sql || join.sql_on || '';
+				let allRefs = (joinSql.match(/(?<=\${).*?(?=})/g)||[]).filter(isFieldRef);
 				let reducedSql = joinSql;
-				if(reducedSql.test(/\([\s\S]*?(?<!\\)\)/)) {
+				let parensRegex = /\([\s\S]*?(?<!\\)\)/g;
+				if (reducedSql.match(parensRegex)) {
 					messages.push({
-						path,location,rule,level:"info",
-						description:"Equality constraints are only checked in the top-level of the ON clause (not within parentheses)",
+						path, location, rule, level: 'info',
+						description: 'Equality constraints are only checked in the top-level of the ON clause (not within parentheses)',
 					});
-					while(reducedSql.test(/\([\s\S]*?(?<!\\)\)/)) {
-						reducedSql = reducedSql.replace(/\([\s\S]*?(?<!\\)\)/g,"");
+					while (reducedSql.match(parensRegex)) {
+						reducedSql = reducedSql.replace(parensRegex, '');
 					}
 				}
-				if(reducedSql.test(/\bOR\b/i)){
+				if (reducedSql.match(/\bOR\b/i)) {
 					messages.push({
-						path,location,rule,exempt,level:"warning",
-						description:"Compound equality constraints are only established by AND'ed equality expressions. OR is not allowed.",
+						path, location, rule, exempt, level: 'error',
+						description: 'Compound equality constraints are only established by AND\'ed equality expressions. OR is not allowed.',
 					});
+					continue;
 				}
-				let constrainedRefs = (reducedSql.match(/(?<=[^><]=\s*\${).*?(?=})}|(?<=\${).*?(?=}\s*=)/g)||[])
-				let [otherCardinality,ownCardinality] = (join.relationship || "many_to_one").split("_to_");
-				let oneAliases = [];
-				if(ownCardinality === "one"){
-					oneAliases.push(join._join)
-				}
-				if(otherCardinality === "one"){
-					let otherAliases = 
-						allRefs
-						.filter((ref) => !ref.match(/^TABLE$|^SUPER$|^EXTENDED$|\.SQL_TABLE_NAME$/))
-						.map(ref => ref.split('.')[0])
-						.filter(alias => alias != join._join)
-					for(otherAlias of otherAliases) {
-						if(!oneAliases.includes(otherAlias)){
-							oneAliases.push(otherAlias)
-						}
-					}
-				}
-				let refsMissingConstraints = [];
-				for(alias of oneAliases) {
-					let view = getView(alias,explore,model);
-					if(!view){
+				let constrainedRefs = (reducedSql.match(/(?<=[^><]=\s*\${).*?(?=})|(?<=\${).*?(?=}\s*=)/g)||[])
+					.filter(isFieldRef);
+				let [otherCardinality, ownCardinality] = (join.relationship || 'many_to_one').split('_to_');
+				let oneAliases = []
+					.concat(ownCardinality === 'one' && join._join)
+					.concat(otherCardinality === 'one' &&
+						allRefs.map(aliasFromRef)
+							.filter((alias) => alias != join._join)
+					)
+					.filter(Boolean)
+					.filter(unique);
+				for (let oneAlias of oneAliases) {
+					let pksForAlias = allRefs
+						.map((ref) => ref.split('.'))
+						.filter(([refAlias, refField]) => refAlias === oneAlias)
+						.filter(([refAlias, refField]) => refField.match(pkRegex))
+						.map(([refAlias, refField]) => refField)
+						.filter(unique);
+					if (!pksForAlias.length) {
+						ok = false;
+						messages.push({
+							location, path, rule, exempt, level: 'error',
+							description: `No PKs dimensions used for ${oneAlias} in ${join._join} join`,
+						});
 						continue;
 					}
-					let pkDimensions = (view.dimensions||[]).filter(pkNamingConvention);
-					if (pkDimensions.every((d) => d._dimension.match(/^(pk0|0pk)/))) {
-						// Skip enforcement for views with no PKs or 0 PKs
+					let pksColumnDeclarations = pksForAlias.map((pk)=>parseInt(pk.match(/\d+/)));
+					let maxDeclaration = pksColumnDeclarations.reduce(max);
+					let minDeclaration = pksColumnDeclarations.reduce(min);
+					if (minDeclaration !== maxDeclaration) {
+						ok = false;
+						messages.push({
+							location, path, rule, exempt, level: 'error',
+							description: `${oneAlias} PK references in ${join._join} join specify different column counts (${minDeclaration},${maxDeclaration})`,
+						});
 						continue;
 					}
-					for(let {_dimension} of pkDimensions){
-						let requiredRef = alias+'.'+_dimension;
-						if(!constrainedRefs.includes(requiredRef)){
-							refsMissingConstraints.push(requiredRef);
+					if (pksForAlias.length !== maxDeclaration) {
+						ok = false;
+						messages.push({
+							location, path, rule, exempt, level: 'error',
+							description: `The number of PKs used (${pksForAlias.length}) for ${oneAlias} does not match the declared number of PK columns (${maxDeclaration}) in ${join._join} join`,
+						});
+						continue;
+					}
+
+					let constrainedPksForAlias = constrainedRefs
+						.map((ref) => ref.split('.'))
+						.filter(([refAlias, refField]) => refAlias === oneAlias)
+						.filter(([refAlias, refField]) => refField.match(pkRegex))
+						.map(([refAlias, refField]) => refField)
+						.filter(unique);
+
+					for (let pk of pksForAlias) {
+						if (!constrainedPksForAlias.includes(pk)) {
+							ok = false;
+							messages.push({
+								location, path, rule, exempt, level: 'error',
+								description: `${oneAlias}'s PK ${pk} is not used in an equality constraint in ${join._join} join`,
+							});
 						}
 					}
-				}
-				if(refsMissingConstraints.length){
-					ok = false;
-					messages.push({
-						location, path, rule, exempt, level: 'warning',
-						description: 
-							refsMissingConstraints.slice(0,3).join(', ')
-							+ (refsMissingConstraints.length>3?"...":'')
-							+ ` should be part of an equality constraint in ${join._join} join`,
-					});
 				}
 			}
 		}
@@ -92,20 +117,4 @@ module.exports = function(
 	return {
 		messages,
 	};
-	
-	/** Gets a view object from the given model, by the given alias within the given explore
-	 * @param {string} alias The alias that refers to a join or base_view
-	 * @param {object} explore The explore in which the alias is resolved
-	 * @param {object} mode The model in which the view is defined
-	 * @return {object} The referenced view
-	 */
-	function getView(alias, explore, model){
-		if(alias == explore.view_name || explore._explore){
-			return model.view[explore.from || explore._explore];
-		}
-		if(explore.join && explore.join[alias]){
-			let join = explore.join[alias]
-			return model.view[join.from || join._join];
-		}
-	}
 };
