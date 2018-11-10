@@ -27,7 +27,6 @@ module.exports = function(
 			{/* Rule K1 */
 				let rule = 'K1';
 				let exempt = getExemption(view, rule) || getExemption(file, rule);
-				console.log(view._view, exempt);
 				if (!pkDimensions.length) {
 					messages.push({
 						location, path, rule, exempt, level: 'error',
