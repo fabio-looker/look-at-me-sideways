@@ -73,30 +73,37 @@
 
 		if (project.file && project.file.manifest && project.file.manifest.custom_rules) {
 			console.log('Checking custom rules...');
-			let requireFromString = require('require-from-string');
-			let get = require('./lib/https-get.js');
-			let customRuleRequests = [];
-			project.file.manifest.custom_rules.forEach(async (url, u) => {
-				try {
-					let request = get(url);
-					customRuleRequests.push(request);
-					let ruleSrc = await request;
-					let rule = requireFromString(ruleSrc, {
-						prependPaths: path.resolve(__dirname, './rules'),
-					});
-					let result = rule(project);
-					messages = messages.concat(result.messages.map((msg)=>({rule: `Custom Rule ${u}`, ...msg})));
-				} catch (e) {
-					let msg = `URL #${u}: ${e&&e.message||e}`;
-					console.error('> '+msg);
-					lamsMessages.push({
-						level: 'lams-error',
-						message: `An error occurred while checking custom rule in ${msg}`,
-					});
-				}
-			});
-			await Promise.all(customRuleRequests).catch(() => {});
-			console.log('> Custom rules done!');
+			if (cliArgs['allow-custom-rules'] !== undefined) {
+				let requireFromString = require('require-from-string');
+				let get = require('./lib/https-get.js');
+				let customRuleRequests = [];
+				project.file.manifest.custom_rules.forEach(async (url, u) => {
+					try {
+						let request = get(url);
+						customRuleRequests.push(request);
+						let ruleSrc = await request;
+						let rule = requireFromString(ruleSrc, {
+							prependPaths: path.resolve(__dirname, './rules'),
+						});
+						let result = rule(project);
+						messages = messages.concat(result.messages.map((msg)=>({rule: `Custom Rule ${u}`, ...msg})));
+					} catch (e) {
+						let msg = `URL #${u}: ${e&&e.message||e}`;
+						console.error('> '+msg);
+						lamsMessages.push({
+							level: 'lams-error',
+							message: `An error occurred while checking custom rule in ${msg}`,
+						});
+					}
+				});
+				await Promise.all(customRuleRequests).catch(() => {});
+				console.log('> Custom rules done!');
+			} else {
+				console.warn([
+					'> Your project specifies custom rules. Run LAMS with `--allow-custom-rules`',
+					'if you want to allow local execution of this remotely-defined Javascript code:',
+				].concat(project.file.manifest.custom_rules).join('\n  '));
+			}
 		}
 
 		console.log('Writing summary files...');
