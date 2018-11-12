@@ -25,11 +25,11 @@
 	code.bad.block::before {content:"# BAD:"}
 	code.bad.block.sql::before {content:"-- BAD:"}
 </style>
-<p>Hi, welcome to my LookML & SQL rules!</p>
-<p>This is a work in progress.</p>
-<p>Also, these rules are quite opinionated, and some people won't like them. I've tried to provide rationales throughout so you can come to your own conclusions. However, at their core, these rules are about making your LookML and SQL reusable, self-explanatory, and reliable.</p>
+<h1>LAMS Style Guide</h1>
+<p>This Look At Me Sideways (LAMS) Style Guide, as well as the associated <a href="https://github.com/fabio-looker/look-at-me-sideways">linter</a>, are designed to help make your LookML project more maintainable.</p>
+<p>These rules are quite opinionated, and some people won't like them. We've tried to provide rationales throughout so you can come to your own conclusions. However, at their core, these rules are about making your LookML and SQL reusable, self-explanatory, and reliable.</p>
 <p>Whenever a rule says something "must" be done, there shouldn't be any exceptions within your project. These are rules that need to be followed consistently since others will rely upon them being followed in their work elsewhere. </p>
-<p>Whenever a rule says that something "should" be done, there may be reasons to deviate from these rules, and doing so will not break any assumptions elsewhere. Whenever the rule is not followed, a comment must be used to indicate the rationale to future readers of the code. </p>
+<p>Whenever a rule says that something "should" be done, there may be reasons to deviate from these rules, and doing so will not break any assumptions elsewhere. Whenever the rule is not followed, a comment must be used to indicate the rationale to future readers of the code (Ideally, using the LAMS rule_exemptions syntax).</p>
 
 <nav><ul>
 <li> <a href="#key-dimensions">Key Dimensions</a></li>
@@ -801,5 +801,5 @@
 	<ul>
 	<li>The naming convention in rules K2, K5, and T3 was changed from <code>{n}pk_...</code> to <code>pk{n}_...</code></li>
 	</ul>
-	<details>
+	</details>
 </body></html>
