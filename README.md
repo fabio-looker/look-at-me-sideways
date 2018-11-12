@@ -77,7 +77,7 @@ LAMS respects user privacy. See [PRIVACY.md](https://github.com/fabio-looker/loo
 LAMS is Copyright (c) 2018 Looker Data Sciences, Inc. See [LICENSE.txt](https://github.com/fabio-looker/look-at-me-sideways/blob/master/LICENSE.txt) for license details.
 
 ##### Support
-LAMS is NOT supported or warranteed by Looker in any way. Please do not contact Looker support for issues with Gazer. Issues may be reported via https://github.com/fabio-looker/look-at-me-sideways/issues , but no SLA or warranty exists that they will be resolved. 
+LAMS is NOT officially supported by Looker. Please do not contact Looker support for issues with LAMS. Issues may be reported via https://github.com/fabio-looker/look-at-me-sideways/issues , but no SLA or warranty exists that they will be resolved. 
 
 ##### Authors
 LAMS has primarily been developed by [Joseph Axisa](https://github.com/josephaxisa) and [Fabio Beltramini](https://github.com/fabio-looker). See [all contributors](https://github.com/fabio-looker/look-at-me-sideways/graphs/contributors)
