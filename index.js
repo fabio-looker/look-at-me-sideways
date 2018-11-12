@@ -45,7 +45,7 @@
 			lamsMessages = lamsMessages.concat(project.errors.map((e) =>
 				({message: e&&e.message||e, level: 'lams-error'})
 			));
-			console.warn('> Issues occurred during parsing (containing files will not be considered):');
+			console.error('> Issues occurred during parsing (containing files will not be considered):');
 			project.errorReport();
 		}
 		if (project.error) {
@@ -59,7 +59,6 @@
 		if (project.name === 'look-at-me-sideways') {
 			lamsMessages.push({level: 'lams-warning', message: 'Consider adding a manifest.lkml file to your project to identify the project_name'});
 		}
-
 		console.log('> Parsing done!');
 
 		console.log('Checking rules... ');
@@ -71,6 +70,34 @@
 			messages = messages.concat(result.messages.map((msg)=>({rule: r, ...msg})));
 		}
 		console.log('> Rules done!');
+
+		if (project.file && project.file.manifest && project.file.manifest.custom_rules) {
+			console.log('Checking custom rules...');
+			let requireFromString = require('require-from-string');
+			let get = require('./lib/https-get.js');
+			let customRuleRequests = [];
+			project.file.manifest.custom_rules.forEach(async (url, u) => {
+				try {
+					let request = get(url);
+					customRuleRequests.push(request);
+					let ruleSrc = await request;
+					let rule = requireFromString(ruleSrc, {
+						prependPaths: path.resolve(__dirname, './rules'),
+					});
+					let result = rule(project);
+					messages = messages.concat(result.messages.map((msg)=>({rule: `Custom Rule ${u}`, ...msg})));
+				} catch (e) {
+					let msg = `URL #${u}: ${e&&e.message||e}`;
+					console.error('> '+msg);
+					lamsMessages.push({
+						level: 'lams-error',
+						message: `An error occurred while checking custom rule in ${msg}`,
+					});
+				}
+			});
+			await Promise.all(customRuleRequests).catch(() => {});
+			console.log('> Custom rules done!');
+		}
 
 		console.log('Writing summary files...');
 		fs.writeFileSync('developer.md', templates.developer({messages, fns: templateFunctions}).replace(/\n\t+/g, '\n'));
