@@ -15,7 +15,7 @@ module.exports = function(
 			for (let join of joins) {
 				let location = `model:${model._model}/explore:${explore._explore}/join:${join._join}`;
 				let exempt = getExemption(join, rule) || getExemption(explore, rule) || getExemption(model, rule);
-				let sql = join.sql || join.sql_on;
+				let sql = join.sql || join.sql_on || '';
 				let sqlWithLkmlRemoved = sql.replace(/\${[\s\S]*?}|{{[\s\S]*?}}|{%\s*if[\s\S]*?endif\s*%}|{%[\s\S]*?%}/g, '' );
 				let references = (sqlWithLkmlRemoved.match(/[a-zA-Z0-9._]+\.[a-zA-Z0-9 ._]+/g)||[])
 					.filter((ref) => !( // Two-part references to allow
