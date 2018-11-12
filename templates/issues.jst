@@ -1,4 +1,5 @@
-{{! let grouping = ctx.fns.groupBy({
+{{! /* Copyright (c) 2018 Looker Data Sciences, Inc. See https://github.com/fabio-looker/look-at-me-sideways/blob/master/LICENSE.txt */
+	let grouping = ctx.fns.groupBy({
 		grouping:["rule"],
 		summaries:{
 			count: (total,msg) => (total||0)+1,

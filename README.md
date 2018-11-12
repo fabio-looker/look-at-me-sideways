@@ -71,10 +71,10 @@ See the rules folder in the LAMS repository for examples of the function signatu
 ### About
 
 ##### Privacy Policy
-LAMS respects user privacy. See [PRIVACY.md](PRIVACY.md) for details.
+LAMS respects user privacy. See [PRIVACY.md](https://github.com/fabio-looker/look-at-me-sideways/blob/master/PRIVACY.md) for details.
 
 ##### License
-LAMS is Copyright (c) 2018 Looker Data Sciences, Inc. See [LICENSE.txt](LICENSE.txt) for license details.
+LAMS is Copyright (c) 2018 Looker Data Sciences, Inc. See [LICENSE.txt](https://github.com/fabio-looker/look-at-me-sideways/blob/master/LICENSE.txt) for license details.
 
 ##### Support
 LAMS is NOT supported or warranteed by Looker in any way. Please do not contact Looker support for issues with Gazer. Issues may be reported via https://github.com/fabio-looker/look-at-me-sideways/issues , but no SLA or warranty exists that they will be resolved. 

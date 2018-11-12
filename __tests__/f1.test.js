@@ -1,3 +1,4 @@
+/* Copyright (c) 2018 Looker Data Sciences, Inc. See https://github.com/fabio-looker/look-at-me-sideways/blob/master/LICENSE.txt */
 require('../lib/expect-to-contain-message');
 
 const rule = require('../rules/f1');

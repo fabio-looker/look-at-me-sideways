@@ -1,9 +1,8 @@
+/* Copyright (c) 2018 Looker Data Sciences, Inc. See https://github.com/fabio-looker/look-at-me-sideways/blob/master/LICENSE.txt */
 require('../lib/expect-to-contain-message');
 
 const rule = require('../rules/f2');
 const {parse} = require('lookml-parser');
-
-// const peek = (fn = x=>x) => (o) => {console.log(fn(o));return o}
 
 describe('Rules', () => {
 	describe('F2', () => {

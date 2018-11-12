@@ -1,3 +1,4 @@
+/* Copyright (c) 2018 Looker Data Sciences, Inc. See https://github.com/fabio-looker/look-at-me-sideways/blob/master/LICENSE.txt */
 const rules = require('../rules/k1-2-3-4');
 
 /* Custom matcher for:
