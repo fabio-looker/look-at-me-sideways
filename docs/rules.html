@@ -206,62 +206,6 @@
 	view: orders { ... dimension: id {... description: "..." }}
 	</code>
 	</details>
-<details id="f7"> <!-- Summary measures -->
-	<summary><b>F7.</b> Views should provide summary measures</summary>
-	<p><b>Rationale:</b> Models tend to default to providing dimensions for every column. However, grouping by every field in the query is often not what users want. Trust your explore users to understand the nuance and give them both options.</p>
-	<code class="good block">
-	view: sessions {
-		...
-		dimension: source {}
-		dimension: campaign {}
-		dimension: device {}
-		dimension: country {}
-		measure: _source {
-			type: string
-			sql: CASE
-			WHEN COUNT(${source}) = 0 THEN NULL
-			WHEN COUNT(${source}) = 1 THEN MIN(${source})
-			WHEN MIN(${source}) = MAX(${source}) THEN MIN(${source})||' (x'||COUNT(${source})::varchar||')'
-			WHEN COUNT(${source}) = 2 THEN MIN(${source})||', '||MAX(${source})
-			ELSE MIN(${source})||' ...+'||(COUNT(${source})-2)::varchar||'... '||MAX(${source})
-		;;
-		# Drill fields will be useful here!
-		}
-		measure: _campaign {
-			type: string
-			sql: CASE
-			WHEN COUNT(${campaign}) = 0 THEN NULL
-			WHEN COUNT(${campaign}) = 1 THEN MIN(${campaign})
-			WHEN MIN(${campaign}) = MAX(${campaign}) THEN MIN(${campaign})||' (x'||COUNT(${campaign})::varchar||')'
-			WHEN COUNT(${campaign}) = 2 THEN MIN(${campaign})||', '||MAX(${campaign})
-			ELSE MIN(${campgacampaignign})||' ...+'||(COUNT(${campaign})-2)::varchar||'... '||MAX(${campaign})
-		;;}
-		measure: _device {
-			type: string
-			sql: CASE
-			WHEN COUNT(${device}) = 0 THEN NULL
-			WHEN COUNT(${device}) = 1 THEN MIN(${device})
-			WHEN MIN(${device}) = MAX(${device}) THEN MIN(${device})||' (x'||COUNT(${device})::varchar||')'
-			WHEN COUNT(${device}) = 2 THEN MIN(${device})||', '||MAX(${device})
-			ELSE MIN(${device})||' ...+'||(COUNT(${device})-2)::varchar||'... '||MAX(${device})
-		;;}
-		measure: _country {
-			type: string
-			sql: CASE
-			WHEN COUNT(${country}) = 0 THEN NULL
-			WHEN COUNT(${country}) = 1 THEN MIN(${country})
-			WHEN MIN(${country}) = MAX(${country}) THEN MIN(${country})||' (x'||COUNT(${country})::varchar||')'
-			WHEN COUNT(${country}) = 2 THEN MIN(${country})||', '||MAX(${country})
-			ELSE MIN(${country})||' ...+'||(COUNT(${country})-2)::varchar||'... '||MAX(${country})
-		;;}
-		measure: sessions {
-			type: count
-			filters: {field:id filter:"-null"}
-		}
-	}
-	</code>
-	<p><b>Note:</b> In some cases, you may wish to use distinct counts instead of counts in your summary measures, or LISTAGGs/GROUP_CONCATs, but do so with the knowledge that it comes at an increased performance cost, even if not in the chosen case branch.</p>
-	</details>
 
 <h1 id="derived-tables">Derived Tables</h1>
 <p><b>Summary:</b> Restrict the ways in which you write the SQL for derived tables in order to make them more modular and their results more realiable and understandable.</p>
@@ -789,6 +733,12 @@
 	<ul>
 	<li><a href="https://discourse.looker.com/t/three-ways-to-model-eav-schemas-and-many-to-many-relationships/1780">EAV Modeling Options</a></li>
 	<li><a href="https://discourse.looker.com/t/a-tool-to-build-lookml-models-for-eav-schema/5146">Automating EAV Generation</a></li>
+	</ul>
+	</details>
+<details>
+	<summary>Deprecated Rules</summary>
+	<ul>
+	<li>Rule F7 previously recommended proactively exposing "summary" measures for your dimensions. While summary measures can still be useful for select dimensions, the release of custom measures which explore users can automatically generate from a dimension in the Explore UI renders this practice no longer as important.</li>
 	</ul>
 	</details>
 
