@@ -107,10 +107,12 @@
 			}
 		}
 
+		let f = fs.readFileSync('./jenkins.properties', 'utf-8');
+		let jobURL = `http://35.177.130.99:8080/job/look-at-me-sideways/${JSON.parse(f).buildNumber}/console`;
 		console.log('Writing summary files...');
 		fs.writeFileSync('developer.md', templates.developer({messages, fns: templateFunctions}).replace(/\n\t+/g, '\n'));
 		console.log('> Developer index done');
-		fs.writeFileSync('issues.md', templates.issues({messages, fns: templateFunctions}).replace(/\n\t+/g, '\n'));
+		fs.writeFileSync('issues.md', templates.issues({messages, jobURL, fns: templateFunctions}).replace(/\n\t+/g, '\n'));
 		console.log('> Issue summary done');
 
 		console.log('> Summary files done!');
