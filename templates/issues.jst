@@ -53,14 +53,22 @@ navigation: true
 			<thead style="background-color:darkblue;color:white"><tr>
 				<th>Level</th>
 				<th>Location</th>
-				<th>Description</th>
+				{{?group.data[0] && group.data[0].exempt}}
+					<th>Reason</th>
+				{{??}}
+					<th>Description</th>
+				{{?}}
 			</tr></thead>
 			<tbody>
 			{{*group.data :data:d }}
 			<tr>
 				<td>{{={error:"⛔",warning:"⚠️"}[data.level]||data.level}}</td>
 				<td>{{&data.location}} {{?data.path}}<a href="{{=data.path}}" style="text-decoration: none">⧉</a>{{?}}</td>
-				<td>{{=data.description}}</td>
+				{{?data.exempt}}
+					<td>{{=data.exempt}}</td>
+				{{??}}
+					<td>{{=data.description}}</td>
+				{{?}}
 			</tr>
 			{{*}}
 			</tbody>
