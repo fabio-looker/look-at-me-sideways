@@ -43,6 +43,7 @@
 			},
 		});
 		if (project.errors) {
+			console.log(project.errors);
 			lamsMessages = lamsMessages.concat(project.errors.map((e) =>
 				({message: e&&e.message||e, level: 'lams-error'})
 			));
