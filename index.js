@@ -137,7 +137,10 @@
 		const buildStatus = (errors.length || warnings.length || lamsErrors.length) ? 'FAILED' : 'PASSED';
 		console.log(`BUILD ${buildStatus}: ${errors.length} errors and ${warnings.length} warnings found. Check .md files for details.`);
 		if (tracker.enabled) {
-			await tracker.track({messages, errors: lamsMessages});
+			await Promise.race([
+				tracker.track({messages, errors: lamsMessages}),
+				new Promise((res) => setTimeout(res, 2000)),
+			]);
 		}
 		if (errors.length) {
 			console.log('errors found, exiting with 1');
