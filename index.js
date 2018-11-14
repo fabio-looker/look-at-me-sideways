@@ -140,8 +140,10 @@
 			await tracker.track({messages, errors: lamsMessages});
 		}
 		if (errors.length) {
+			console.log('errors found, exiting with 1');
 			process.exit(1);
 		} else {
+			console.log('no errors found, exiting with 0');
 			process.exit(0);
 		}
 	} catch (e) {
