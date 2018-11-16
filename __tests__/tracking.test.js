@@ -36,7 +36,7 @@ describe('CLI', () => {
 	const path = require('path');
 	const privacyPolicyPath = path.resolve(__dirname, '../PRIVACY.md');
 	const privacyPolicy = realFs.readFileSync(privacyPolicyPath, 'utf-8');
-	const appVersion = JSON.parse(realFs.readFileSync(path.resolve(__dirname, '../package.json'))).version
+	const appVersion = JSON.parse(realFs.readFileSync(path.resolve(__dirname, '../package.json'))).version;
 	const initFs = {
 		[privacyPolicyPath]: privacyPolicy,
 	};

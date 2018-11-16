@@ -34,7 +34,7 @@ module.exports = function(
 						return;
 					}
 					let match = value
-						.replace(/\b\d+\.\d+\b/g,'') //Remove dedimals
+						.replace(/\b\d+\.\d+\b/g, '') // Remove dedimals
 						.match(/(^|\$\{|\{\{|\{%)\s*(([^.{}]+)(\.[^.{}]+)+)\s*($|%\}|\})/);
 					let parts = ((match||[])[2]||'').split('.').filter(Boolean);
 					if (!parts.length) {

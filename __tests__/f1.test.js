@@ -303,7 +303,7 @@ describe('Rules', () => {
 			}`));
 			expect(result).not.toContainMessage(failMessageF1);
 		});
-		
+
 		it('should not error for decimal numbers that look kind of like fields', () => {
 			let result = rule(parse(`file: f {
 				view: foo {
