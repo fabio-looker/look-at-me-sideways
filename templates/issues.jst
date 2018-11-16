@@ -17,7 +17,7 @@ navigation: true
 ---
 <p style="text-align:right;color:#cccs">
 	Generated {{=(new Date()).toUTCString()}}
-	<br><a href="{{=ctx.jobURL}}">Build Log</a>
+	{{?ctx.jobURL}}<br><a href="{{=ctx.jobURL}}">Build Log</a>{{?}}
 </p>
 {{?lamsMessages.length}}
 <b>LAMS Issues</b>

@@ -107,9 +107,13 @@
 				].concat(project.file.manifest.custom_rules).join('\n  '));
 			}
 		}
-
-		let f = fs.readFileSync('./jenkins.properties', 'utf-8');
-		let jobURL = `http://35.177.130.99:8080/job/look-at-me-sideways/${JSON.parse(f).buildNumber}/console`;
+		let jobURL;
+		try {
+			let f = fs.readFileSync('./jenkins.properties', 'utf-8');
+			jobURL = `http://35.177.130.99:8080/job/look-at-me-sideways/${JSON.parse(f).buildNumber}/console`;
+		} catch (e) {
+			//Silent
+		}
 		console.log('Writing summary files...');
 		fs.writeFileSync('developer.md', templates.developer({messages, fns: templateFunctions}).replace(/\n\t+/g, '\n'));
 		console.log('> Developer index done');
