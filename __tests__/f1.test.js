@@ -303,5 +303,27 @@ describe('Rules', () => {
 			}`));
 			expect(result).not.toContainMessage(failMessageF1);
 		});
+		
+		it('should not error for decimal numbers that look kind of like fields', () => {
+			let result = rule(parse(`file: f {
+				view: foo {
+					sql_table_name: foo ;;
+					dimension: bar { type: number }
+					dimension: baz { type: yesno sql: \${bar} > 3.14;;}
+				}
+			}`));
+			expect(result).not.toContainMessage(failMessageF1);
+		});
+
+		it('should not error for decimal numbers that look kind of like fields in liquid', () => {
+			let result = rule(parse(`file: f {
+				view: foo {
+					sql_table_name: foo ;;
+					dimension: rad {}
+					dimension: rot { sql: {% if value > 3.14 %} \${rad}/3.14 ||' rot' {% else %} \${rad}||' rad' {% endif %} ;;}
+				}
+			}`));
+			expect(result).not.toContainMessage(failMessageF1);
+		});
 	});
 });

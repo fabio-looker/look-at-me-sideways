@@ -30,10 +30,12 @@ module.exports = function(
 					field.links && field.links.map && field.links.map((o)=>o.url).join(''),
 					field.filters && field.filters.map && field.filters.map((o)=>'{{'+o.field+'}}').join(''),
 				].forEach((value) => {
-					if (!value || !value.match) {
+					if (!value || !value.replace) {
 						return;
 					}
-					let match = value.match(/(^|\$\{|\{\{|\{%)\s*(([^.{}]+)(\.[^.{}]+)+)\s*($|%\}|\})/);
+					let match = value
+						.replace(/\b\d+\.\d+\b/g,'') //Remove dedimals
+						.match(/(^|\$\{|\{\{|\{%)\s*(([^.{}]+)(\.[^.{}]+)+)\s*($|%\}|\})/);
 					let parts = ((match||[])[2]||'').split('.').filter(Boolean);
 					if (!parts.length) {
 						return;
