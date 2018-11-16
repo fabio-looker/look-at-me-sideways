@@ -41,14 +41,13 @@ navigation: true
 {{?}}
 
 {{?exempt}}
-<details><summary><b>Exemptions</b></summary>
-{{= renderRecursive(exempt,{rootName:""}) }}
+{{= renderRecursive(exempt,{rootName:"Exemptions",open:false}) }}
 </details>
 {{?}}
 
-{{! function renderRecursive(group,{lvl=0,rootName}){var out="";}}
-	<details style="margin-left: {{=2*lvl}}em" open="open">
-		<summary style="margin-left:-2em;border-bottom:solid 1px #333;">
+{{! function renderRecursive(group,{lvl=0,rootName,open=true}){var out="";}}
+	<details style="margin-left: 3em" {{?open}}open="open"{{?}}>
+		<summary style="margin-left:-1em;border-bottom:solid 1px #333;">
 			<b>{{=rootName||group.key}}</b>
 			(
 			{{?group.summaries.errors}}   {{=group.summaries.errors}}⛔ {{?}}
