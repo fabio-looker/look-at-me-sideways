@@ -1,22 +1,22 @@
 {{! /* Copyright (c) 2018 Looker Data Sciences, Inc. See https://github.com/fabio-looker/look-at-me-sideways/blob/master/LICENSE.txt */
-	let grouping = ctx.fns.groupBy({
-		grouping:[msg => (
-			(msg.rule.match(/^[a-zA-Z][0-9]+$/)
-				? `<a href="https://fabio-looker.github.io/look-at-me-sideways/rules.html#${msg.rule.toLowerCase()}">${msg.rule}</a>`
-				: msg.rule
-			)
-			+ ". "
-			+ ctx.fns.ruleName(msg.rule)
-			)],
-		summaries:{
-			count: (total,msg) => (total||0)+1,
-			errors: (total,msg) => (total||0)+(msg.level=="error"),
-			warnings: (total,msg) => (total||0)+(msg.level=="warning")
-			},
-		});
+	let summaries = {
+		count: (total,msg) => (total||0)+1,
+		errors: (total,msg) => (total||0)+(msg.level=="error"),
+		warnings: (total,msg) => (total||0)+(msg.level=="warning")
+	};
+	let ruleGrouping = msg => (
+		(msg.rule.match(/^[a-zA-Z][0-9]+$/)
+			? `<a href="https://fabio-looker.github.io/look-at-me-sideways/rules.html#${msg.rule.toLowerCase()}">${msg.rule}</a>`
+			: msg.rule
+		)
+		+ ". "
+		+ ctx.fns.ruleName(msg.rule)
+	);
 	let subset = ctx.messages.filter(msg=>(msg.level=="warning"||msg.level=="error"));
-	let issues = subset.filter(msg=>!msg.exempt).reduce(grouping,null);
-	let exempt = subset.filter(msg=> msg.exempt).reduce(grouping,null);
+	let issues = subset.filter(msg=>!msg.exempt)
+		.reduce(ctx.fns.groupBy({grouping:[ruleGrouping],summaries}),null);
+	let exempt = subset.filter(msg=> msg.exempt)
+		.reduce(ctx.fns.groupBy({grouping:[ruleGrouping,"exempt"],summaries}),null);
 	let lamsMessages = ctx.messages.filter(msg=>(msg.level=="lams-warning"||msg.level=="lams-error"));
 	}}---
 title: {{?issues && issues.summaries.count}}Issues - {{=issues.summaries.errors||"0"}}⛔ {{=issues.summaries.warnings||"0"}}⚠️  {{??}}No Issues{{?}}
@@ -59,22 +59,14 @@ navigation: true
 			<thead style="background-color:darkblue;color:white"><tr>
 				<th>Level</th>
 				<th>Location</th>
-				{{?group.data[0] && group.data[0].exempt}}
-					<th>Reason</th>
-				{{??}}
-					<th>Description</th>
-				{{?}}
+				<th>Description</th>
 			</tr></thead>
 			<tbody>
 			{{*group.data :data:d }}
 			<tr>
 				<td>{{={error:"⛔",warning:"⚠️"}[data.level]||data.level}}</td>
 				<td>{{&data.location}} {{?data.path}}<a href="{{&data.path}}" style="text-decoration: none">⧉</a>{{?}}</td>
-				{{?data.exempt}}
-					<td>{{&data.exempt}}</td>
-				{{??}}
-					<td>{{=data.description}}</td>
-				{{?}}
+				<td>{{=data.description}}</td>
 			</tr>
 			{{*}}
 			</tbody>

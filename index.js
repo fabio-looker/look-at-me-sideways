@@ -72,7 +72,6 @@
 			messages = messages.concat(result.messages.map((msg)=>({rule: r, ...msg})));
 		}
 		console.log('> Rules done!');
-
 		if (project.file && project.file.manifest && project.file.manifest.custom_rules) {
 			console.log('Checking custom rules...');
 			if (cliArgs['allow-custom-rules'] !== undefined) {
@@ -84,6 +83,7 @@
 						let request = get(url);
 						customRuleRequests.push(request);
 						let ruleSrc = await request;
+						console.log('> #'+u);
 						let rule = requireFromString(ruleSrc, {
 							prependPaths: path.resolve(__dirname, './rules'),
 						});
