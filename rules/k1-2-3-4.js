@@ -74,6 +74,10 @@ module.exports = function(
 						description: `Primary Key Dimensions in ${view._view} are not declared before other dimensions`,
 					});
 				}
+				messages.push({
+					location, path, rule, exempt, level: 'info',
+					description: `Primary Key Dimensions found in ${view._view} are declared before other dimensions`,
+				});
 			}
 			{/* Rule K4 */
 				let dims = pkDimensions.filter((dim)=>!dim.hidden);
@@ -86,7 +90,12 @@ module.exports = function(
 						description: `Primary Key Dimensions (${dimNames}) in ${view._view} are not hidden`,
 						hint: `If you want the column to be user-facing, make it the sql for both a hidden Primary Key Dimension, and a separate non-hidden dimension.`,
 					});
+					continue;
 				}
+				messages.push({
+					location, path, rule, exempt, level: 'info',
+					description: `Primary Key Dimensions found in ${view._view} are all hidden`,
+				});
 			}
 			for (let pkDimension of pkDimensions) {
 				// Return PK info for PK index in developer.md
