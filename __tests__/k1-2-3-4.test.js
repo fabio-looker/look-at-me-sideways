@@ -162,7 +162,6 @@ describe('Rules', () => {
 	describe('K4', () => {
 		let passMessageK4 = {
 			rule: 'K4',
-			exempt: false,
 			level: 'info',
 		};
 

@@ -80,22 +80,25 @@ module.exports = function(
 				});
 			}
 			{/* Rule K4 */
-				let dims = pkDimensions.filter((dim)=>!dim.hidden);
 				let rule = 'K4';
-				let exempt = dims.every((d)=>getExemption(d, rule)) || getExemption(view, rule) || getExemption(file, rule);
-				let dimNames = dims.map((dim)=>dim._dimension).join(', ');
-				if (pkDimensions.some((dim)=>!dim.hidden)) {
+				let badDims = pkDimensions.filter((dim)=>!dim.hidden);
+				if (badDims.length) {
+					let exempt = badDims.every((d)=>getExemption(d, rule)) && getExemption(badDims[0], rule)
+						|| getExemption(view, rule) 
+						|| getExemption(file, rule);
+					let dimNames = badDims.map((dim)=>dim._dimension).join(', ');
 					messages.push({
 						location, path, rule, exempt, level: 'warning',
 						description: `Primary Key Dimensions (${dimNames}) in ${view._view} are not hidden`,
 						hint: `If you want the column to be user-facing, make it the sql for both a hidden Primary Key Dimension, and a separate non-hidden dimension.`,
 					});
 					continue;
+				} else {
+					messages.push({
+						location, path, rule, level: 'info',
+						description: `Primary Key Dimensions found in ${view._view} are all hidden`,
+					});
 				}
-				messages.push({
-					location, path, rule, exempt, level: 'info',
-					description: `Primary Key Dimensions found in ${view._view} are all hidden`,
-				});
 			}
 			for (let pkDimension of pkDimensions) {
 				// Return PK info for PK index in developer.md
