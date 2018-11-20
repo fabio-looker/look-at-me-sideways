@@ -26,7 +26,7 @@ If your LookML project doesn't have a manifest.lkml file, you may want to consid
 
 ##### Ruleset Support
 
-As of the current release, the Linter enforces rules K1-4, F1-4, E1-2, and T1. 
+As of the current release, the Linter enforces rules K1-4, F1-4, E1-2, and T1-10. 
 
 It currently does not resolve `extends` references, so if you are complying with a rule via extension, use a rule exemption as noted below. 
 
