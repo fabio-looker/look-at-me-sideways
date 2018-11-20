@@ -265,8 +265,7 @@ describe('Rules', () => {
 			expect(result).not.toContainMessage({...error});
 		});
 
-
-		it('should error for each subquery in a transformation', () => {
+		it('should error for each sequential subquery in a transformation', () => {
 			let result = rule(parse(`file: f {
 				view: foo { derived_table: { sql:
 					WITH missing AS (
@@ -284,6 +283,29 @@ describe('Rules', () => {
 						GROUP BY 1,2
 					)
 					SELECT "foo" as bar
+				;; } }
+			}`));
+			expect(result).toContainMessage({...error, ...r.pkColumnsRequired});
+			expect(result).toContainMessage({...error, ...r.pkNamingConvention});
+		});
+
+		it('should error for each nested subquery in a transformation', () => {
+			let result = rule(parse(`file: f {
+				view: foo { derived_table: { sql:
+					SELECT "foo" as bar
+					FROM (
+						SELECT account_id, COUNT(*)
+						FROM (
+							SELECT
+								pk1_tenant_id, 
+								pk2_user_id,
+								---
+								MAX(start) as last_login
+							FROM sessions
+							GROUP BY 1,2
+						) as minumbered
+						GROUP BY 1
+					) as missing
 				;; } }
 			}`));
 			expect(result).toContainMessage({...error, ...r.pkColumnsRequired});
