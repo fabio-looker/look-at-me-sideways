@@ -43,6 +43,7 @@
 			},
 		});
 		if (project.errors) {
+			console.log(project.errors);
 			lamsMessages = lamsMessages.concat(project.errors.map((e) =>
 				({message: e&&e.message||e, level: 'lams-error'})
 			));
@@ -71,7 +72,6 @@
 			messages = messages.concat(result.messages.map((msg)=>({rule: r, ...msg})));
 		}
 		console.log('> Rules done!');
-
 		if (project.file && project.file.manifest && project.file.manifest.custom_rules) {
 			console.log('Checking custom rules...');
 			if (cliArgs['allow-custom-rules'] !== undefined) {
@@ -83,6 +83,7 @@
 						let request = get(url);
 						customRuleRequests.push(request);
 						let ruleSrc = await request;
+						console.log('> #'+u);
 						let rule = requireFromString(ruleSrc, {
 							prependPaths: path.resolve(__dirname, './rules'),
 						});
@@ -106,9 +107,13 @@
 				].concat(project.file.manifest.custom_rules).join('\n  '));
 			}
 		}
-
-		let f = fs.readFileSync('./jenkins.properties', 'utf-8');
-		let jobURL = `http://35.177.130.99:8080/job/look-at-me-sideways/${JSON.parse(f).buildNumber}/console`;
+		let jobURL;
+		try {
+			let f = fs.readFileSync('./jenkins.properties', 'utf-8');
+			jobURL = `http://35.177.130.99:8080/job/look-at-me-sideways/${JSON.parse(f).buildNumber}/console`;
+		} catch (e) {
+			// Silent
+		}
 		console.log('Writing summary files...');
 		fs.writeFileSync('developer.md', templates.developer({messages, fns: templateFunctions}).replace(/\n\t+/g, '\n'));
 		console.log('> Developer index done');
@@ -136,11 +141,16 @@
 		const buildStatus = (errors.length || warnings.length || lamsErrors.length) ? 'FAILED' : 'PASSED';
 		console.log(`BUILD ${buildStatus}: ${errors.length} errors and ${warnings.length} warnings found. Check .md files for details.`);
 		if (tracker.enabled) {
-			await tracker.track({messages, errors: lamsMessages});
+			await Promise.race([
+				tracker.track({messages, errors: lamsMessages}),
+				new Promise((res) => setTimeout(res, 2000)),
+			]);
 		}
 		if (errors.length) {
+			console.log('errors found, exiting with 1');
 			process.exit(1);
 		} else {
+			console.log('no errors found, exiting with 0');
 			process.exit(0);
 		}
 	} catch (e) {

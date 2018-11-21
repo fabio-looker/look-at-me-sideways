@@ -121,10 +121,12 @@
 	<p><b>Rationale:</b> By naming it similarly to Primary Keys, it will be suggested to anyone joining on a view as a possible join key. At the same time, the use of a `d` instead of a number allows it to be differentiated from a primary key</p>
 	<p><b>Note:</b> If your database supports multiple projections of data, you may want to come up with a more sophisticated naming scheme instead.</p>
 	</details>
-<details id="k6"> <!-- Sort dimensions -->
-	<summary><b>K6.</b> Views based on tables with a <a class="subtle" href="#glossary-sort-key">sort key</a> should define one or more Sort Key Dimensions</summary>
-	<p><b>Note:</b> The name for this concept varies greatly from database to database, and you may want your naming scheme to reflect the native name for this concept in your particular database. "sk" is also not ideal in that it could be read as "surrogate key".</p>
-	<p><b>Note:</b> If you have compound sort keys, it would be a good idea to include the rank of each column in the dimension name. Unlike the PK naming convention, each column should get a different numner, e.g. <code>idx1_site, idx2_date, idx3_country</code>.</p>
+<details id="k6"> <!-- Sort/cluster dimensions -->
+	<summary><b>K6.</b> Views based on tables with a <a class="subtle" href="#glossary-sort-key">sort/cluster key</a> should define one or more Sort/Cluster Key Dimensions</summary>
+	<p>...named like <code>pkc_{key_name}</code></p>
+	<p><b>Rationale:</b> By naming it similarly to Primary Keys, it will be suggested to anyone joining on a view as a possible join key. At the same time, the use of a `c` instead of a number allows it to be differentiated from a primary key</p>
+	<p><b>Note:</b> The name for this concept varies greatly from database to database. "pkc" was chosen for cluster, in favor of "pks" which could be read as a "surrogate key".</p>
+	<p><b>Note:</b> If you have compound cluster/sort keys, it would be a good idea to include the rank of each column in the dimension name. Unlike the PK naming convention, each column should get a different numner, e.g. <code>pkc1_site, pkc2_date, pkc3_country</code>.</p>
 	</details>
 
 <h1 id="other-fields">Other Fields</h1>
@@ -623,8 +625,8 @@
 	</code>
 
 	</details>
-<details id="e3"> <!-- Join on dist key and sort keys when possible -->
-	<summary><b>E3.</b> Joins should use <a class="subtle" href="#glossary-dist-key">distribution keys</a> and <a class="subtle" href="#glossary-sort-key">sort keys</a> when possible</summary>
+<details id="e3"> <!-- Join on dist key and sort/cluster keys when possible -->
+	<summary><b>E3.</b> Joins should use <a class="subtle" href="#glossary-dist-key">distribution keys</a> and <a class="subtle" href="#glossary-sort-key">sort/cluster keys</a> when possible</summary>
 	<code class="good block">
 	explore: order_items {
 		join: orders {
@@ -655,7 +657,7 @@
 		}
 	}
 	</code>
-	<p><b>Note:</b> In the EAV example, even though the first part of the primary key, the distribution key, and the sort key all result in `entity_id`, writing them out multiple times with the different key dimensions communicates what they do to anyone reading the join, and should have negligible performance impact.</p>
+	<p><b>Note:</b> In the EAV example, even though the first part of the primary key, the distribution key, and the sort/cluster key all result in `entity_id`, writing them out multiple times with the different key dimensions communicates what they do to anyone reading the join, and should have negligible performance impact.</p>
 	</details>
 <details id="e4"> <!-- always_filter on sortkey -->
 	<summary><b>E4.</b> Explores should declare `always_filter` on the base table's sort key / parition column / clustered index</summary>
@@ -716,7 +718,7 @@
 	<p>This is something I really wanted to include, but was not able to this time around. Something like semver. Hopefully a future version will include this. (Pull requests will be considered!)</p>
 	</details>
 <details>
-	<summary>Defining distribution, sort keys, indexes, etc</summary>
+	<summary>Defining distribution, sort/cluster keys, indexes, etc</summary>
 	<p>These are super important, but the strategy for these is too broad and complex to fit into this kind of ruleset.</p>
 	<!--However, you can check out some of these useful resources: <ol>
 		<li></li>
@@ -744,7 +746,7 @@
 
 <h1 id="terms">Glossary</h1>
 <details id="glossary-dist-key"><summary>Distribution key</summary> In Redshift, Vertica, MemSQL, MS PDW and possibly some others, data can be distributed according to a particular value. For simplicity, I use the name distribution key, though different dialects may have different names for this.</details>
-<details id="glossary-sort-key"><summary>Sort key</summary> Sort keys in Redshift, or partition columns in Big Query, clustered indexes in MS SQL Server or PDW, etc.</details>
+<details id="glossary-sort-key"><summary>Sort/cluster key</summary> Sort keys in Redshift, or partition & cluster columns in Big Query, clustered indexes in MS SQL Server or PDW, etc.</details>
 <details><summary>View</summary> I'm exclusively talking about LookML Views. Database views are not covered here</details>
 <h1 id="changelog">Changelog</h1>
 <details><summary>v2.0 (2018-10)</summary>
