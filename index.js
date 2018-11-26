@@ -38,6 +38,7 @@
 			source: cliArgs.input || cliArgs.i,
 			conditionalCommentString: 'LAMS',
 			console: {
+				log: (msg) => {},
 				warn: (msg) => lamsMessages.push({message: msg&&msg.message||msg, level: 'lams-warning'}), // LAMS warnings should not abort the deploy
 				error: (msg) => lamsMessages.push({message: msg&&msg.message||msg, level: 'lams-error'}), // LAMS errors should abort the deploy
 			},
