@@ -109,12 +109,14 @@
 			}
 		}
 		let jobURL;
-		try {
-			let f = fs.readFileSync('./jenkins.properties', 'utf-8');
-			jobURL = `http://35.177.130.99:8080/job/look-at-me-sideways/${JSON.parse(f).buildNumber}/console`;
-		} catch (e) {
-			// Silent
+		if (cliArgs.jenkins) {
+			try {
+				jobURL = process.env.BUILD_URL;
+			} catch (e) {
+				// silent
+			}
 		}
+
 		console.log('Writing summary files...');
 		fs.writeFileSync('developer.md', templates.developer({messages, fns: templateFunctions}).replace(/\n\t+/g, '\n'));
 		console.log('> Developer index done');
@@ -147,11 +149,10 @@
 				new Promise((res) => setTimeout(res, 2000)),
 			]);
 		}
+
 		if (errors.length) {
-			console.log('errors found, exiting with 1');
 			process.exit(1);
 		} else {
-			console.log('no errors found, exiting with 0');
 			process.exit(0);
 		}
 	} catch (e) {
