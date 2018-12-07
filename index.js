@@ -130,6 +130,7 @@
 			let json = JSON.stringify({
 				errors: errors.length,
 				warnings: warnings.length,
+				lamsErrors: lamsErrors.length,
 			});
 			fs.writeFileSync('results.json', json, 'utf8');
 		}
