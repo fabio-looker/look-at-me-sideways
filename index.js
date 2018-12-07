@@ -108,6 +108,18 @@
 				].concat(project.file.manifest.custom_rules).join('\n  '));
 			}
 		}
+
+		let errors = messages.filter((msg) => {
+			return msg.level==='error' && !msg.exempt;
+		});
+		let warnings = messages.filter((msg) => {
+			return msg.level==='warning' && !msg.exempt;
+		});
+		let lamsErrors = messages.filter((msg) => {
+			return msg.level==='lams-errors' && !msg.exempt;
+		});
+
+
 		let jobURL;
 		if (cliArgs.jenkins) {
 			try {
@@ -115,6 +127,11 @@
 			} catch (e) {
 				// silent
 			}
+			let json = JSON.stringify({
+				errors: errors.length,
+				warnings: warnings.length,
+			});
+			fs.writeFileSync('results.json', json, 'utf8');
 		}
 
 		console.log('Writing summary files...');
@@ -125,21 +142,6 @@
 
 		console.log('> Summary files done!');
 
-		/* For CI integration?
-		var errors = messages.filter(msg=>msg.level=="error" && !msg.exempt)
-		for(e of errors){console.error(e.path,e.rule,e.description)}
-		var warnings = messages.filter(msg=>msg.level=="warning" && !msg.exempt)
-		for(w of warnings){console.warn(w.path,w.rule,e.description)}
-		*/
-		let errors = messages.filter((msg) => {
-			return msg.level==='error' && !msg.exempt;
-		});
-		let warnings = messages.filter((msg) => {
-			return msg.level==='warning' && !msg.exempt;
-		});
-		let lamsErrors = messages.filter((msg) => {
-			return msg.level==='lams-errors' && !msg.exempt;
-		});
 
 		const buildStatus = (errors.length || warnings.length || lamsErrors.length) ? 'FAILED' : 'PASSED';
 		console.log(`BUILD ${buildStatus}: ${errors.length} errors and ${warnings.length} warnings found. Check .md files for details.`);
