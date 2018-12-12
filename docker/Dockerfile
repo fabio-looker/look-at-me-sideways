@@ -29,10 +29,6 @@ ENV reporting_user=$default_reporting_user
 RUN addgroup -S -g ${gid} ${group} \
   && adduser -h ${JENKINS_HOME} -G ${group} -D -u ${uid} -s bin/sh ${user}
 
-# Jenkins home directory is a volume, so configuration and build history
-# can be persisted and survive image upgrades
-#VOLUME $JENKINS_HOME
-
 # `/usr/share/jenkins/ref/` contains all reference configuration we want
 # to set on a fresh new installation. Use it to bundle additional plugins
 # or config file with your custom jenkins Docker image.
@@ -113,5 +109,9 @@ RUN chgrp -R ${group} $JENKINS_HOME && chgrp -R ${group} /usr/share/jenkins/ref
 USER ${user}
 RUN git config --global user.name "Jenkins"
 RUN git config --global user.email "lams@host.com"
+
+# Jenkins home directory is a volume, so configuration and build history
+# can be persisted and survive image upgrades
+VOLUME $JENKINS_HOME
 
 ENTRYPOINT ["/sbin/tini", "--", "/usr/local/bin/jenkins.sh"]
