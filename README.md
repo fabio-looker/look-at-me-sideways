@@ -14,9 +14,7 @@ See a video of LAMS in action:
 
 ##### Docker
 
-Although LAMS can be deployed manually using your CI tool of choice, we have provided a Docker image to simplify the deployment.
-
-##### Git Hook configuration
+Although LAMS can be deployed manually using your CI tool of choice, we have provided a Docker image to simplify the deployment. Documentation can be found [here](https://github.com/fabio-looker/look-at-me-sideways/blob/release/1.0/docker/README.md).
 
 ##### Manifest.lkml (optional)
 
