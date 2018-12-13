@@ -6,20 +6,35 @@ const {parse} = require('lookml-parser');
 
 describe('Rules', () => {
 	describe('E2', () => {
-		let failMessageE2 = {
-			rule: 'E2',
-			exempt: false,
-			level: 'error',
-		};
+		let info = {level: 'info'};
+		let error = {level: 'error'};
+		let warning = {level: 'warning'};
+		let e2 = {rule: 'E2'};
 
-		it('should pass if an explore has no joins', () => {
+		it('should pass if there are no models', () => {
+			let result = rule(parse(`view: foo{}`));
+			expect(result).toContainMessage({...e2,...info});
+			expect(result).not.toContainMessage(warning);
+			expect(result).not.toContainMessage(error);
+		});
+
+		it('should pass if there are no explores', () => {
+			let result = rule(parse(`model: foo {}`));
+			expect(result).toContainMessage({...e2,...info});
+			expect(result).not.toContainMessage(warning);
+			expect(result).not.toContainMessage(error);
+		});
+
+		it('should pass if there are no joins', () => {
 			let result = rule(parse(`model: m {
 				explore: orders {}
 			}`));
-			expect(result).not.toContainMessage(failMessageE2);
+			expect(result).toContainMessage({...e2,...info});
+			expect(result).not.toContainMessage(warning);
+			expect(result).not.toContainMessage(error);
 		});
 
-		it('should pass if an explore has only many_to_many joins', () => {
+		it('should pass for many_to_many joins', () => {
 			let result = rule(parse(`model: m {
 				explore: orders {
 					join: users {
@@ -27,7 +42,9 @@ describe('Rules', () => {
 					}
 				}
 			}`));
-			expect(result).not.toContainMessage(failMessageE2);
+			expect(result).toContainMessage({...e2,...info});
+			expect(result).not.toContainMessage(warning);
+			expect(result).not.toContainMessage(error);
 		});
 
 		it('should pass if a many_to_one join correctly uses a 1pk equality constraint', () => {
@@ -39,7 +56,9 @@ describe('Rules', () => {
 					}
 				}
 			}`));
-			expect(result).not.toContainMessage(failMessageE2);
+			expect(result).toContainMessage({...e2,...info});
+			expect(result).not.toContainMessage(warning);
+			expect(result).not.toContainMessage(error);
 		});
 
 		it('should pass if a many_to_one join correctly uses a 1pk equality constraint in reverse, or across lines', () => {
@@ -47,13 +66,15 @@ describe('Rules', () => {
 				explore: orders {
 					join: users {
 						relationship: many_to_one
-						sql_on: \${orders.user_id} 
+						sql_on: \${orders.user_id}
 						=
 						\${users.pk1_user_id} ;;
 					}
 				}
 			}`));
-			expect(result).not.toContainMessage(failMessageE2);
+			expect(result).toContainMessage({...e2,...info});
+			expect(result).not.toContainMessage(warning);
+			expect(result).not.toContainMessage(error);
 		});
 
 		it('should pass if a many_to_one join correctly uses a 2pk equality constraint', () => {
@@ -66,7 +87,9 @@ describe('Rules', () => {
 					}
 				}
 			}`));
-			expect(result).not.toContainMessage(failMessageE2);
+			expect(result).toContainMessage({...e2,...info});
+			expect(result).not.toContainMessage(warning);
+			expect(result).not.toContainMessage(error);
 		});
 
 		it('should error if a many_to_one join uses no PK dimensions', () => {
@@ -78,7 +101,7 @@ describe('Rules', () => {
 					}
 				}
 			}`));
-			expect(result).toContainMessage(failMessageE2);
+			expect(result).toContainMessage({...e2,...error});
 		});
 
 		it('should error if a many_to_one join uses PK dimensions, but not on the "one" view', () => {
@@ -90,7 +113,7 @@ describe('Rules', () => {
 					}
 				}
 			}`));
-			expect(result).toContainMessage(failMessageE2);
+			expect(result).toContainMessage({...e2,...error});
 		});
 
 		it('should error if a many_to_one join has mismatched column numbers on the "one" view', () => {
@@ -103,7 +126,7 @@ describe('Rules', () => {
 					}
 				}
 			}`));
-			expect(result).toContainMessage(failMessageE2);
+			expect(result).toContainMessage({...e2,...error});
 		});
 
 		it('should error if a many_to_one join does not reference enough PK dimensions on the "one" view', () => {
@@ -115,7 +138,7 @@ describe('Rules', () => {
 					}
 				}
 			}`));
-			expect(result).toContainMessage(failMessageE2);
+			expect(result).toContainMessage({...e2,...error});
 		});
 
 		it('should error if a many_to_one join does not reference all unique PK dimensions from the "one" view', () => {
@@ -128,7 +151,7 @@ describe('Rules', () => {
 					}
 				}
 			}`));
-			expect(result).toContainMessage(failMessageE2);
+			expect(result).toContainMessage({...e2,...error});
 		});
 
 		it('should error if a many_to_one does not involve PK dimensions on the "one" view in an equality constraint', () => {
@@ -141,7 +164,7 @@ describe('Rules', () => {
 					}
 				}
 			}`));
-			expect(result).toContainMessage(failMessageE2);
+			expect(result).toContainMessage({...e2,...error});
 		});
 
 
@@ -156,7 +179,7 @@ describe('Rules', () => {
 					}
 				}
 			}`));
-			expect(result).toContainMessage(failMessageE2);
+			expect(result).toContainMessage({...e2,...error});
 		});
 
 
@@ -169,7 +192,9 @@ describe('Rules', () => {
 					}
 				}
 			}`));
-			expect(result).not.toContainMessage(failMessageE2);
+			expect(result).toContainMessage({...e2,...info});
+			expect(result).not.toContainMessage(warning);
+			expect(result).not.toContainMessage(error);
 		});
 
 		it('should pass if a one_to_one join correctly uses a 2pk equality constraint', () => {
@@ -182,7 +207,9 @@ describe('Rules', () => {
 					}
 				}
 			}`));
-			expect(result).not.toContainMessage(failMessageE2);
+			expect(result).toContainMessage({...e2,...info});
+			expect(result).not.toContainMessage(warning);
+			expect(result).not.toContainMessage(error);
 		});
 
 
@@ -195,7 +222,7 @@ describe('Rules', () => {
 					}
 				}
 			}`));
-			expect(result).toContainMessage(failMessageE2);
+			expect(result).toContainMessage({...e2,...error});
 		});
 
 		it('should error if a one_to_one join uses PK dimensions, but not on the "left"/"explore" side', () => {
@@ -207,7 +234,7 @@ describe('Rules', () => {
 					}
 				}
 			}`));
-			expect(result).toContainMessage(failMessageE2);
+			expect(result).toContainMessage({...e2,...error});
 		});
 
 		it('should error if a one_to_one join uses PK dimensions, but not on the "right"/"join" side', () => {
@@ -219,7 +246,7 @@ describe('Rules', () => {
 					}
 				}
 			}`));
-			expect(result).toContainMessage(failMessageE2);
+			expect(result).toContainMessage({...e2,...error});
 		});
 
 		it('should error if a one_to_one join has mismatched column numbers on the  "left"/"explore" side', () => {
@@ -227,12 +254,12 @@ describe('Rules', () => {
 				explore: users {
 					join: user_summaries {
 						relationship: one_to_one
-						sql_on: \${user_summaries.pk1_user_id} = \${users.pk2_user_id} 
+						sql_on: \${user_summaries.pk1_user_id} = \${users.pk2_user_id}
 							AND \${user_summaries.pk2_tenant_id} = \${users.pk2_tenant_id} ;;
 					}
 				}
 			}`));
-			expect(result).toContainMessage(failMessageE2);
+			expect(result).toContainMessage({...e2,...error});
 		});
 
 		it('should error if a one_to_one join does not reference enough PK dimensions on the "left"/"explore" view', () => {
@@ -245,7 +272,7 @@ describe('Rules', () => {
 					}
 				}
 			}`));
-			expect(result).toContainMessage(failMessageE2);
+			expect(result).toContainMessage({...e2,...error});
 		});
 
 		it('should error if a one_to_one join does not reference enough PK dimensions on the "right"/"join" view', () => {
@@ -258,7 +285,22 @@ describe('Rules', () => {
 					}
 				}
 			}`));
-			expect(result).toContainMessage(failMessageE2);
+			expect(result).toContainMessage({...e2,...error});
 		});
+
+		it('should pass if a one_to_one join does not actually result in a SQL JOIN', () => {
+			let result = rule(parse(`model: m {
+				explore: invitations {
+					join: invitation_extra_fields {
+						relationship: one_to_one
+						sql: ;;
+					}
+				}
+			}`));
+			expect(result).toContainMessage({...e2,...info});
+			expect(result).not.toContainMessage(warning);
+			expect(result).not.toContainMessage(error);
+		});
+
 	});
 });

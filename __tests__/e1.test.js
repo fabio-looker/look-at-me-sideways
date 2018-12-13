@@ -6,18 +6,80 @@ const {parse} = require('lookml-parser');
 
 describe('Rules', () => {
 	describe('E1', () => {
-		let warnMessageE1 = {
-			rule: 'E1',
-			exempt: false,
-			level: 'warning',
-		};
+		let info = {level: 'info'};
+		let error = {level: 'error'};
+		let warning = {level: 'warning'};
+		let e1 = {rule: 'E1'};
 
-		let passMessageE1 = {
-			rule: 'E1',
-			level: 'info',
-		};
 
-		it('should pass if all fields in a join use the subsitution operator', () => {
+		it('should pass if there are no models', () => {
+			let result = rule(parse(`view: foo{}`));
+			expect(result).toContainMessage({...e1,...info});
+			expect(result).not.toContainMessage(warning);
+			expect(result).not.toContainMessage(error);
+		});
+
+		it('should pass if there are no explores', () => {
+			let result = rule(parse(`model: foo {}`));
+			expect(result).toContainMessage({...e1,...info});
+			expect(result).not.toContainMessage(warning);
+			expect(result).not.toContainMessage(error);
+		});
+
+		it('should pass if there are no joins', () => {
+			let result = rule(parse(`model: foo {
+				explore: orders {}
+			}`));
+			expect(result).toContainMessage({...e1,...info});
+			expect(result).not.toContainMessage(warning);
+			expect(result).not.toContainMessage(error);
+		});
+
+		it('should pass for joins with no sql_on/sql', () => {
+			let result = rule(parse(`model: foo {
+				explore: orders {
+					join: status {
+						relationship: many_to_many
+						type: cross
+					}
+				}
+			}`));
+			expect(result).toContainMessage({...e1,...info});
+			expect(result).not.toContainMessage(warning);
+			expect(result).not.toContainMessage(error);
+		});
+
+		it('should pass for joins with no field-like strings in sql', () => {
+			let result = rule(parse(`model: foo {
+				explore: orders {
+					join: order_fields {
+						relationship: one_to_one
+						sql: ;;
+					}
+				}
+			}`));
+			expect(result).toContainMessage({...e1,...info});
+			expect(result).not.toContainMessage(warning);
+			expect(result).not.toContainMessage(error);
+		});
+
+
+		it('should pass for joins with no field-like strings in sql_on', () => {
+			let result = rule(parse(`model: foo {
+				explore: orders {
+					join: payments {
+						relationship: one_to_one
+						type: full_outer
+						sql: FALSE ;;
+					}
+				}
+			}`));
+			expect(result).toContainMessage({...e1,...info});
+			expect(result).not.toContainMessage(warning);
+			expect(result).not.toContainMessage(error);
+		});
+
+		it('should pass for joins where all (at least one) field references use ${} in sql_on', () => {
 			let result = rule(parse(`model: foo {
 				explore: orders {
 					join: users {
@@ -26,10 +88,56 @@ describe('Rules', () => {
 					}
 				}
 			}`));
-			expect(result).toContainMessage(passMessageE1);
+			expect(result).toContainMessage({...e1,...info});
+			expect(result).not.toContainMessage(warning);
+			expect(result).not.toContainMessage(error);
 		});
 
-		it('should not warn if liquid syntax is detected and the subsitution operator is not found', () => {
+		it('should pass for joins where all (at least one) field references use ${} in sql', () => {
+			//Note: This users/_users stuff is due to a limitation in Looker and reflect actual usage
+			let result = rule(parse(`model: foo {
+				explore: orders {
+					join: _users {
+						from: users
+						relationship: one_to_many
+						sql: LEFT JOIN \${users.SQL_TABLE_NAME} as _users
+						  ON \${orders.1pk_user_id} = \${users.id};;
+					}
+				}
+			}`));
+			expect(result).toContainMessage({...e1,...info});
+			expect(result).not.toContainMessage(warning);
+			expect(result).not.toContainMessage(error);
+		});
+
+		it('should warn for joins with bare field references in sql_on', () => {
+			let result = rule(parse(`model: foo {
+				explore: orders {
+					join: users {
+						relationship: one_to_many
+						sql_on: \${orders.1pk_user_id} = \${_users.id}
+						  AND orders.account_id = \${_users.account_id};;
+					}
+				}
+			}`));
+			expect(result).toContainMessage({...e1,...warning});
+		});
+
+		it('should warn for joins with bare field references in sql', () => {
+			let result = rule(parse(`model: foo {
+				explore: orders {
+					join: users {
+						relationship: one_to_many
+						sql: LEFT JOIN analytics.users AS _users
+						  ON \${orders.1pk_user_id} = \${_users.id}
+						  AND \${orders.account_id} = \${_users.account_id};;
+					}
+				}
+			}`));
+			expect(result).toContainMessage({...e1,...warning});
+		});
+
+		it('should pass if bare references are found inside liquid', () => {
 			let result = rule(parse(`model: foo {
 				explore: orders {
 					join: users {
@@ -42,34 +150,46 @@ describe('Rules', () => {
 					}
 				}
 			}`));
-			expect(result).toContainMessage(passMessageE1);
+			expect(result).toContainMessage({...e1,...info});
+			expect(result).not.toContainMessage(warning);
+			expect(result).not.toContainMessage(error);
 		});
 
-		it('should warn if not all join fields use the substitution operator', () => {
+		it('should warn if bare references are found outside liquid', () => {
 			let result = rule(parse(`model: foo {
 				explore: orders {
 					join: users {
-						relationship: one_to_many
-						sql_on: \${orders.1pk_user_id} = \${users.id} AND orders.country_id = \${users.country_id};;
+						relationship: many_to_one
+						sql_on: {% if users.created_week._in_query %}
+									users.created_week=orders_smry_week.week
+								{% else %}
+									users.id=orders.user_id
+								{% endif %}
+								AND orders.account_id = \${_users.account_id
+								;;
 					}
 				}
 			}`));
-			expect(result).toContainMessage(warnMessageE1);
+			expect(result).toContainMessage({...e1,...warning});
 		});
 
-		it('should warn if no join fields use the substitution operator', () => {
+		it('should not warn for `SAFE.*` field-like strings', () => {
+			//Note: In BigQuery, these are functions, not fields. Example function only, actual usage may be different
 			let result = rule(parse(`model: foo {
-				connection: "myconnection"
 				explore: orders {
-					join: users {
+					join: _users {
+						from: users
 						relationship: one_to_many
-						sql_on: orders.1pk_user_id = users.id ;;
+						sql: LEFT JOIN \${users.SQL_TABLE_NAME} as _users
+						  ON \${orders.1pk_user_id} = SAFE.CAST(\${users.id} AS integer);;
 					}
 				}
 			}`));
-			expect(result).toContainMessage(warnMessageE1);
+			expect(result).toContainMessage({...e1,...info});
+			expect(result).not.toContainMessage(warning);
+			expect(result).not.toContainMessage(error);
 		});
 
-		// TODO confirm exemption levels for E rules.
+		// TODO Test exemptions
 	});
 });
