@@ -22,10 +22,16 @@ module.exports = function(
 			for (let join of joins) {
 				let location = `model:${model._model}/explore:${explore._explore}/join:${join._join}`;
 				let exempt = getExemption(join, rule) || getExemption(explore, rule) || getExemption(model, rule);
-
 				let joinSql = join.sql || join.sql_on || '';
 				let allRefs = (joinSql.match(/(?<=\${).*?(?=})/g)||[]).filter(isFieldRef);
-				let reducedSql = joinSql;
+				let reducedSql = joinSql
+					.replace(new RegExp([
+						'[^\\\\\']+(\\\\.[^\\\\\']+)*\'',	// ' string literal
+						'`[^\\\\`]+(\\\\.[^\\\\`]+)*`',	// ` quoted name
+						'"[^\\\\"]+(\\\\.[^\\\\"]+)*"',	// " string literal or quoted name
+						'--[^\\n]*(\\n|$)',				// -- Single line comment
+						'/\\*[^*]*(\\*[^/][^*]*)*\\*/', // /* Multi-line comment
+					].join('|')), '[nonsql]');
 				let parensRegex = /\([\s\S]*?(?<!\\)\)/g;
 				if (reducedSql.match(parensRegex)) {
 					messages.push({
@@ -35,6 +41,10 @@ module.exports = function(
 					while (reducedSql.match(parensRegex)) {
 						reducedSql = reducedSql.replace(parensRegex, '');
 					}
+				}
+				if(join.sql !== undefined && !reducedSql.match(/\bJOIN\b/)){
+					// joins using 'sql' that do not actually result in a SQL JOIN, e.g. for field-only views
+					continue;
 				}
 				if (reducedSql.match(/\bOR\b/i)) {
 					messages.push({
