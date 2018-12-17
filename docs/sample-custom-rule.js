@@ -10,21 +10,21 @@ module.exports = function(
 	project,
 ) {
 	let messages = [];
-	let rule = 'sample-custom-rule'; //Note that each custom rule script may implement multiple "rules" if desired
-		// Rule names of the form [A-WY-Z][0-9]+ are reserved for future LAMS usage
+	let rule = 'sample-custom-rule'; // Note that each custom rule script may implement multiple "rules" if desired
+	// Rule names of the form [A-WY-Z][0-9]+ are reserved for future LAMS usage
 	let models = project.models || [];
 	for (let model of models) {
-		if(model.connection && model.connection.match(/_dev$/)){
+		if (model.connection && model.connection.match(/_dev$/)) {
 			let location = `model:${model._model}`;
 			let path = `/projects/${project.name}/files/${model._model}.model.lkml`;
 			messages.push({
-				location, //The logical location within the project/model
-				path, //The URL path to link to the error (as closely as possible)
+				location, // The logical location within the project/model
+				path, // The URL path to link to the error (as closely as possible)
 				rule,
-				exempt:false, //Pass either false, or a non-empty string with the exemption reason.
-					//Truthy exemptions will prevent warnings& errors from failing the build
+				exempt: false, // Pass either false, or a non-empty string with the exemption reason.
+				// Truthy exemptions will prevent warnings& errors from failing the build
 				level: 'error', // info | warning | error
-				description: `...`,
+				description: `${model} utilises staging connection, ${model.connection}.`,
 			});
 		}
 	}
