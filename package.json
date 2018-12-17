@@ -6,6 +6,9 @@
   "directories": {
     "doc": "docs"
   },
+  "bin": {
+    "lams": "./index.js"
+  },
   "scripts": {
     "test": "jest --watchAll --verbose"
   },

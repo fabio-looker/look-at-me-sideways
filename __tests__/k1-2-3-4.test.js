@@ -162,6 +162,7 @@ describe('Rules', () => {
 	describe('K4', () => {
 		let passMessageK4 = {
 			rule: 'K4',
+			exempt: false,
 			level: 'info',
 		};
 
@@ -180,6 +181,7 @@ describe('Rules', () => {
 			}`));
 			expect(result).toContainMessage(passMessageK4);
 		});
+
 		it('should warn if any pk is not hidden', () => {
 			let result = rule(parse(`file: f {
 				view: foo {

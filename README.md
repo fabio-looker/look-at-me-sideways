@@ -14,9 +14,7 @@ See a video of LAMS in action:
 
 ##### Docker
 
-Although LAMS can be deployed manually using your CI tool of choice, we have provided a Docker image to simplify the deployment.
-
-##### Git Hook configuration
+Although LAMS can be deployed manually using your CI tool of choice, we have provided a Docker image to simplify the deployment. Documentation can be found [here](https://github.com/fabio-looker/look-at-me-sideways/blob/release/1.0/docker/README.md).
 
 ##### Manifest.lkml (optional)
 
@@ -26,9 +24,9 @@ If your LookML project doesn't have a manifest.lkml file, you may want to consid
 
 ##### Ruleset Support
 
-As of the current release, the Linter enforces rules K1-4, F1-4, E1-2, and T1-10. 
+As of the current release, the Linter enforces rules K1-4, F1-4, E1-2, and T1-10.
 
-It currently does not resolve `extends` references, so if you are complying with a rule via extension, use a rule exemption as noted below. 
+It currently does not resolve `extends` references, so if you are complying with a rule via extension, use a rule exemption as noted below.
 
 ##### Rule Exemption
 
@@ -54,7 +52,8 @@ One of the primary ways that LAMS gives developers feedback, in addition to pass
 
 ##### Custom Rules
 
-In addition to linting against the rules from the style guide, LAMS also has experimental support for defining custom rules:
+In addition to linting against the rules from the style guide, LAMS also has
+experimental support for calling custom rules:
 
 ```lkml
 # in your manifest.lkml
@@ -66,7 +65,7 @@ project_name: "my_project"
 # ]
 ```
 
-See the rules folder in the LAMS repository for examples of the function signature to export from your script.
+See [here](docs/sample-custom-rules.js) for an example implementation of a custom rule script.
 
 ### About
 
@@ -77,7 +76,7 @@ LAMS respects user privacy. See [PRIVACY.md](https://github.com/fabio-looker/loo
 LAMS is Copyright (c) 2018 Looker Data Sciences, Inc. See [LICENSE.txt](https://github.com/fabio-looker/look-at-me-sideways/blob/master/LICENSE.txt) for license details.
 
 ##### Support
-LAMS is NOT officially supported by Looker. Please do not contact Looker support for issues with LAMS. Issues may be reported via https://github.com/fabio-looker/look-at-me-sideways/issues , but no SLA or warranty exists that they will be resolved. 
+LAMS is NOT officially supported by Looker. Please do not contact Looker support for issues with LAMS. Issues may be reported via https://github.com/fabio-looker/look-at-me-sideways/issues , but no SLA or warranty exists that they will be resolved.
 
 ##### Authors
 LAMS has primarily been developed by [Joseph Axisa](https://github.com/josephaxisa) and [Fabio Beltramini](https://github.com/fabio-looker). See [all contributors](https://github.com/fabio-looker/look-at-me-sideways/graphs/contributors)
@@ -86,7 +85,6 @@ LAMS has primarily been developed by [Joseph Axisa](https://github.com/josephaxi
 Bug reports and pull requests are welcome on GitHub at https://github.com/fabio-looker/look-at-me-sideways.
 
 ##### Code of Conduct
-This project is intended to be a safe, welcoming space for collaboration, and contributors are expected to adhere to the 
+This project is intended to be a safe, welcoming space for collaboration, and contributors are expected to adhere to the
 [Contributer Covenant Code of Conduct](https://www.contributor-covenant.org/version/1/4/code-of-conduct). Concerns or
 incidents may be reported confidentially to fabio@looker.com.
-
