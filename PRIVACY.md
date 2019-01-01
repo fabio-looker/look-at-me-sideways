@@ -24,7 +24,7 @@ is sent to us includes:
   - Error conditions associated with the execution of the script
   - Standard network & connection information such as IP address
 
-The `reporting` allows you to specify your overall reporting preference:
+The `reporting` option lets you specify your overall reporting preference:
 
   - `save-yes` - To run LAMS and opt-in to reporting for future runs
   - `yes`      - To run LAMS once with reporting
