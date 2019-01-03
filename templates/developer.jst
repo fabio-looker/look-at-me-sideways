@@ -16,7 +16,7 @@ navigation: true
 {{?}}
 
 {{! function renderRecursive(group,{lvl=0,rootName}){var out="";}}
-	<details style="margin-left: {{=2*lvl}}em" {{? lvl==0}}open{{?}}>
+	<details style="margin-left: {{=2*lvl}}em" {{? lvl==0}}open="open"{{?}}>
 		<summary style="margin-left:-2em;border-bottom:solid 1px #333;">
 			<div style="display:inline-flex;width:90%;justify-content:space-between">
 			<b>{{&ctx.fns.format(rootName||group.key)}} {{?lvl>0}}({{=group.summaries.count}}){{?}}</b>
@@ -25,7 +25,7 @@ navigation: true
 		{{?group.data}}
 			<table style="border:solid 1px #ccc">
 			<thead style="background-color:darkblue;color:white"><tr>
-				<th>View</td>
+				<th>View</th>
 				<th>All PKs</th>
 				<th>Description</th>
 			</tr></thead>
