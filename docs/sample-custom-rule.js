@@ -22,9 +22,9 @@ module.exports = function(
 				path, // The URL path to link to the error (as closely as possible)
 				rule,
 				exempt: false, // Pass either false, or a non-empty string with the exemption reason.
-				// Truthy exemptions will prevent warnings& errors from failing the build
+				// Truthy exemptions will prevent warnings & errors from failing the build
 				level: 'error', // info | warning | error
-				description: `${model} utilises staging connection, ${model.connection}.`,
+				description: `${model._model} utilises staging connection, ${model.connection}.`,
 			});
 		}
 	}
