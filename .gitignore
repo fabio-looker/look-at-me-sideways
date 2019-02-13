@@ -1,6 +1,0 @@
-node_modules
-templates/*.js
-developer.md
-issues.md
-*.lkml
-.DS_Store
